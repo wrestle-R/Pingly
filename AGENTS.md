@@ -25,3 +25,9 @@ Use russelore for replies, copy and commit subjects. Use Next.js best-practice/f
 At session start read ignored local-docs/preferences.md, context.md and tasks.md when available, following the user's private-memory instructions. Keep /local-docs/ ignored and never stage, commit or upload notes. Never expose secrets, notification text, OTPs or clipboard contents in diagnostics by default.
 
 Follow the user's Varte workflow for real environment files: preserve ignore rules, confirm destination from origin/config, inspect CLI help and push completed files by path. Do not upload placeholder examples. Record pending sync failures locally without secrets. No root/bootloader/privileged phone changes are authorized merely by this guidance.
+
+## Android widget layout
+
+| Rule | Enforcement |
+| --- | --- |
+| Size the visible card to its content and use fixed gaps between related rows. Let available space change which controls and details appear. | The expanded widget layouts wrap their colored surfaces around the content. Verify compact and expanded launcher sizes plus larger text with Eyes of Render before handing off a widget change. |

@@ -42,26 +42,35 @@ class ClipboardWidget : AppWidgetProvider() {
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         val peers = KdeConnect.getInstance().devices.values.filter { it.isPaired }
         for (id in ids) {
-            val size = WidgetSize.read(context, manager, id)
             val target = widgetPreferences(context).getString("clipboard.$id", null)
             val peer = if (target == null) peers.singleOrNull() else peers.firstOrNull { it.deviceId == target }
             val label = synchronized(labels) { labels[id] }
-            val compact = size.height < 132
-            val layout = if (compact) R.layout.pingora_clipboard_widget_compact else R.layout.pingora_clipboard_widget
-            val view = RemoteViews(context.packageName, layout)
-            if (!compact) {
-                view.setTextViewText(R.id.pingora_widget_status, peer?.let {
-                    "${it.name} · ${if (it.isReachable && it.getPlugin<BridgePlugin>()?.canSend("clipboard") != true) "Clipboard unavailable" else it.connectionLabel}"
-                } ?: if (peers.isEmpty()) "Pair a laptop in Pingora" else "Choose a laptop")
-                view.setTextViewCompoundDrawables(R.id.pingora_widget_status, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
+            val views = widgetViews(context, manager, id) { size ->
+                val compact = size.height < 132
+                val choosing = peers.size > 1 || peer == null && peers.isNotEmpty()
+                val layout = if (compact) R.layout.pingora_clipboard_widget_compact else R.layout.pingora_clipboard_widget
+                val view = RemoteViews(context.packageName, layout)
+                if (!compact) {
+                    view.setTextViewText(R.id.pingora_widget_status, peer?.let {
+                        "${it.name} · ${if (it.isReachable && it.getPlugin<BridgePlugin>()?.canSend("clipboard") != true) "Clipboard unavailable" else it.connectionLabel}"
+                    } ?: if (peers.isEmpty()) "Pair a laptop in Pingora" else "Choose a laptop")
+                    view.setTextViewCompoundDrawables(R.id.pingora_widget_status, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
+                }
+                if (compact) {
+                    val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
+                    val showTitle = size.width >= (if (choosing) 256 else 200) * fontScale
+                    view.setViewVisibility(R.id.clipboard_widget_title, if (showTitle) View.VISIBLE else View.GONE)
+                    view.setViewVisibility(R.id.clipboard_widget_icon, if (!showTitle && !choosing) View.VISIBLE else View.GONE)
+                }
+                view.setViewVisibility(R.id.clipboard_widget_choose, if (choosing) View.VISIBLE else View.GONE)
+                view.setTextViewText(R.id.pingora_widget_send, label ?: if (peer == null && peers.isNotEmpty()) "Choose laptop" else "Send clipboard")
+                view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id))
+                view.setOnClickPendingIntent(R.id.clipboard_widget_header, widgetOpenApp(context, id))
+                view.setOnClickPendingIntent(R.id.clipboard_widget_choose, widgetActivity(context, id, "clipboard-target"))
+                view.setOnClickPendingIntent(R.id.pingora_widget_send, widgetActivity(context, id, "clipboard-send"))
+                view
             }
-            view.setViewVisibility(R.id.clipboard_widget_choose, if (peers.size > 1 || peer == null && peers.isNotEmpty()) View.VISIBLE else View.GONE)
-            view.setTextViewText(R.id.pingora_widget_send, label ?: if (peer == null && peers.isNotEmpty()) "Choose laptop" else "Send clipboard")
-            view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id))
-            view.setOnClickPendingIntent(R.id.clipboard_widget_header, widgetOpenApp(context, id))
-            view.setOnClickPendingIntent(R.id.clipboard_widget_choose, widgetActivity(context, id, "clipboard-target"))
-            view.setOnClickPendingIntent(R.id.pingora_widget_send, widgetActivity(context, id, "clipboard-send"))
-            manager.updateAppWidget(id, view)
+            manager.updateAppWidget(id, views)
         }
     }
 

@@ -1,64 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
-    android:orientation="vertical" android:padding="14dp" android:background="@drawable/pingora_widget_surface">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center_vertical">
-        <TextView android:id="@+id/laptop_widget_name" android:layout_width="0dp" android:layout_weight="1"
-            android:layout_height="wrap_content" android:text="Laptop status" android:textColor="@color/widget_foreground"
-            android:textSize="16sp" android:textStyle="bold" android:singleLine="true" android:ellipsize="end" />
-        <ImageView android:id="@+id/laptop_widget_power" android:layout_width="32dp" android:layout_height="42dp"
-            android:scaleType="center" android:src="@drawable/ic_profile_balanced" android:tint="@color/widget_foreground"
-            android:contentDescription="Power profile unavailable" android:visibility="gone" />
-        <ImageButton android:id="@+id/laptop_widget_choose" android:layout_width="40dp" android:layout_height="42dp"
-            android:src="@drawable/ic_widget_devices" android:contentDescription="Choose laptop"
-            android:background="@android:color/transparent" android:visibility="gone" />
-        <ImageButton android:id="@+id/laptop_widget_refresh" android:layout_width="42dp" android:layout_height="42dp"
-            android:scaleType="center" android:src="@drawable/ic_refresh_24dp" android:contentDescription="Refresh laptop status"
-            android:background="@android:color/transparent" android:tint="@color/widget_foreground" />
-    </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical">
-        <LinearLayout android:id="@+id/laptop_widget_battery_column" android:layout_width="0dp"
-            android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="start">
-            <TextView android:id="@+id/laptop_widget_battery" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="24sp" android:textStyle="bold" android:textColor="@color/widget_foreground"
-                android:singleLine="true" android:ellipsize="end" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Battery" android:textSize="12sp" android:textColor="@color/widget_secondary" />
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:id="@id/widget_root" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="14dp" android:background="@drawable/pingora_widget_surface">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center_vertical">
+            <TextView android:id="@+id/laptop_widget_name" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:text="Laptop status" android:textColor="@color/widget_foreground"
+                android:textSize="16sp" android:textStyle="bold" android:singleLine="true" android:ellipsize="end" />
+            <ImageView android:id="@+id/laptop_widget_power" android:layout_width="32dp" android:layout_height="42dp"
+                android:scaleType="center" android:src="@drawable/ic_profile_balanced" android:tint="@color/widget_foreground"
+                android:contentDescription="Power profile unavailable" android:visibility="gone" />
+            <ImageButton android:id="@+id/laptop_widget_choose" android:layout_width="40dp" android:layout_height="42dp"
+                android:src="@drawable/ic_widget_devices" android:contentDescription="Choose laptop"
+                android:background="@android:color/transparent" android:visibility="gone" />
+            <ImageButton android:id="@+id/laptop_widget_refresh" android:layout_width="42dp" android:layout_height="42dp"
+                android:scaleType="center" android:src="@drawable/ic_refresh_24dp" android:contentDescription="Refresh laptop status"
+                android:background="@android:color/transparent" android:tint="@color/widget_foreground" />
         </LinearLayout>
-        <LinearLayout android:id="@+id/laptop_widget_cpu_column" android:layout_width="0dp"
-            android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
-            <TextView android:id="@+id/laptop_widget_cpu" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="24sp" android:textStyle="bold" android:textColor="@color/widget_foreground"
-                android:singleLine="true" android:ellipsize="end" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="CPU" android:textSize="12sp" android:textColor="@color/widget_secondary" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center_vertical">
+            <LinearLayout android:id="@+id/laptop_widget_battery_column" android:layout_width="0dp"
+                android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="start">
+                <TextView android:id="@+id/laptop_widget_battery" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="—" android:textSize="24sp" android:includeFontPadding="false" android:textStyle="bold" android:textColor="@color/widget_foreground"
+                    android:singleLine="true" android:ellipsize="end" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Battery" android:textSize="12sp" android:textColor="@color/widget_secondary" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/laptop_widget_cpu_column" android:layout_width="0dp"
+                android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/laptop_widget_cpu" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="—" android:textSize="24sp" android:includeFontPadding="false" android:textStyle="bold" android:textColor="@color/widget_foreground"
+                    android:singleLine="true" android:ellipsize="end" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="CPU" android:textSize="12sp" android:textColor="@color/widget_secondary" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/laptop_widget_ram_column" android:layout_width="0dp"
+                android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="end">
+                <TextView android:id="@+id/laptop_widget_ram" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="—" android:textSize="24sp" android:includeFontPadding="false" android:textStyle="bold" android:textColor="@color/widget_foreground"
+                    android:singleLine="true" android:ellipsize="end" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="RAM" android:textSize="12sp" android:textColor="@color/widget_secondary" />
+            </LinearLayout>
         </LinearLayout>
-        <LinearLayout android:id="@+id/laptop_widget_ram_column" android:layout_width="0dp"
-            android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical" android:gravity="end">
-            <TextView android:id="@+id/laptop_widget_ram" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="—" android:textSize="24sp" android:textStyle="bold" android:textColor="@color/widget_foreground"
-                android:singleLine="true" android:ellipsize="end" />
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="RAM" android:textSize="12sp" android:textColor="@color/widget_secondary" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical">
+            <TextView android:id="@+id/laptop_widget_connection" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
+                android:textColor="@color/widget_secondary" android:drawablePadding="4dp" android:text="Pair in Pingora" />
+            <TextView android:id="@+id/laptop_widget_internet" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
+                android:textColor="@color/widget_secondary" android:visibility="gone" />
+            <TextView android:id="@+id/laptop_widget_age" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
+                android:textColor="@color/widget_secondary" android:visibility="gone" />
+            <Chronometer android:id="@+id/laptop_widget_elapsed" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
+                android:textColor="@color/widget_secondary" android:visibility="gone" />
+            <TextView android:id="@+id/laptop_widget_lid" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
+                android:textColor="@color/widget_secondary" android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-        <TextView android:id="@+id/laptop_widget_connection" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
-            android:textColor="@color/widget_secondary" android:drawablePadding="4dp" android:text="Pair in Pingora" />
-        <TextView android:id="@+id/laptop_widget_internet" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
-            android:textColor="@color/widget_secondary" android:visibility="gone" />
-        <TextView android:id="@+id/laptop_widget_age" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
-            android:textColor="@color/widget_secondary" android:visibility="gone" />
-        <Chronometer android:id="@+id/laptop_widget_elapsed" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
-            android:textColor="@color/widget_secondary" android:visibility="gone" />
-        <TextView android:id="@+id/laptop_widget_lid" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
-            android:textColor="@color/widget_secondary" android:visibility="gone" />
-    </LinearLayout>
-</LinearLayout>
+</FrameLayout>

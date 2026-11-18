@@ -6,20 +6,33 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Build
+import android.util.SizeF
+import android.widget.RemoteViews
+import androidx.core.os.BundleCompat
 import org.kde.kdeconnect.Device
 import org.kde.kdeconnect.ui.MainActivity
 
-internal data class WidgetSize(val width: Int, val height: Int) {
-    companion object {
-        fun read(context: Context, manager: AppWidgetManager, id: Int): WidgetSize {
-            val options = manager.getAppWidgetOptions(id)
-            val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-            return WidgetSize(
-                options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 190),
-                options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 142)
-            )
+internal data class WidgetSize(val width: Int, val height: Int)
+
+internal fun widgetViews(
+    context: Context,
+    manager: AppWidgetManager,
+    id: Int,
+    render: (WidgetSize) -> RemoteViews,
+): RemoteViews {
+    val options = manager.getAppWidgetOptions(id)
+    if (Build.VERSION.SDK_INT >= 31) {
+        val sizes = BundleCompat.getParcelableArrayList(options, AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java)
+        if (!sizes.isNullOrEmpty() && sizes.size <= 16) {
+            return RemoteViews(sizes.associateWith { render(WidgetSize(it.width.toInt(), it.height.toInt())) })
         }
     }
+    val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    return render(WidgetSize(
+        options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 190),
+        options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 142)
+    ))
 }
 
 internal val Device.connectionLabel: String

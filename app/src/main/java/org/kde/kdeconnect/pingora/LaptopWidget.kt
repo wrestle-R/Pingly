@@ -61,42 +61,52 @@ class LaptopWidget : AppWidgetProvider() {
             val battery=status.optJSONObject("battery")
             val level=battery?.optInt("level",-1) ?: -1
             val slumber=status.optJSONObject("slumber")
-            val size = WidgetSize.read(context, manager, id)
-            val showSync = size.height >= 240 && saved.receivedAt > 0
-            val showElapsed = size.height >= 260 && showSync && System.currentTimeMillis() >= saved.receivedAt
-            val view=RemoteViews(context.packageName,R.layout.pingora_laptop_widget)
-            view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id))
-            view.setOnClickPendingIntent(R.id.laptop_widget_power, widgetOpenApp(context, id))
-            val metricsVisibility = if (size.width >= 216) View.VISIBLE else View.GONE
-            view.setViewVisibility(R.id.laptop_widget_cpu_column, metricsVisibility)
-            view.setViewVisibility(R.id.laptop_widget_ram_column, metricsVisibility)
-            val (cpu, ram) = metricValues(status)
-            view.setTextViewText(R.id.laptop_widget_cpu, cpu)
-            view.setTextViewText(R.id.laptop_widget_ram, ram)
-            view.setTextViewText(R.id.laptop_widget_name,peer?.name ?: "Laptop status")
-            view.setTextViewText(R.id.laptop_widget_battery,if(level in 0..100) "$level%" else "—")
-            view.setTextViewText(R.id.laptop_widget_connection,when {peer==null->if(peers.isEmpty()) "Pair in Pingora" else "Choose a laptop";peer.isReachable!=true->"Offline · Saved reading";!fresh->"Updating · Saved reading";else->peer.connectionLabel})
-            view.setTextViewText(R.id.laptop_widget_internet,(if(battery?.optBoolean("charging")==true) "Charging · " else "")+when(status.optString("internet")) {"full"->"Internet online";"portal"->"Sign-in needed";"limited"->"Internet limited";"none"->"No internet";else->"Internet unknown"})
-            val profile=status.optString("power_profile")
-            view.setImageViewResource(R.id.laptop_widget_power,when(profile) {"power-saver"->R.drawable.ic_profile_saver;"performance"->R.drawable.ic_profile_performance;else->R.drawable.ic_profile_balanced})
-            view.setViewVisibility(R.id.laptop_widget_power,if(profile in listOf("power-saver","balanced","performance")) android.view.View.VISIBLE else View.GONE)
-            view.setContentDescription(R.id.laptop_widget_power,"Last reported profile: ${profileLabel(profile)}")
-            view.setTextViewText(R.id.laptop_widget_lid,if(slumber?.optBoolean("available")==true) "Lid mode · ${slumber.optString("lid_action","unknown")}" else "Lid mode unavailable")
-            view.setTextViewText(R.id.laptop_widget_age,if(saved.receivedAt>0) "Last sync · ${android.text.format.DateFormat.format("d MMM, HH:mm",saved.receivedAt)}" else "Not synced yet")
-            view.setChronometer(R.id.laptop_widget_elapsed,SystemClock.elapsedRealtime()-(System.currentTimeMillis()-saved.receivedAt).coerceAtLeast(0),"%s since last sync",showElapsed)
-            val intent=Intent(context,LaptopWidget::class.java).setAction(ACTION).putExtra("widget",id).putExtra("command","refresh")
-            view.setOnClickPendingIntent(R.id.laptop_widget_refresh,PendingIntent.getBroadcast(context,id*4,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
-            view.setViewVisibility(R.id.laptop_widget_internet, if (size.height >= 152 && saved.receivedAt > 0) View.VISIBLE else View.GONE)
-            view.setViewVisibility(R.id.laptop_widget_age, if (showSync) View.VISIBLE else View.GONE)
-            view.setViewVisibility(R.id.laptop_widget_elapsed, if (showElapsed) View.VISIBLE else View.GONE)
-            view.setViewVisibility(R.id.laptop_widget_lid, if (size.height >= 285 && slumber?.optBoolean("available") == true) View.VISIBLE else View.GONE)
-            view.setViewVisibility(R.id.laptop_widget_connection, if (size.height >= 145 || !fresh || peer?.usesPrivateVpn == true) View.VISIBLE else View.GONE)
-            val choosing = peers.size > 1 || peer == null && peers.isNotEmpty()
-            view.setViewVisibility(R.id.laptop_widget_choose, if (choosing) View.VISIBLE else View.GONE)
-            view.setOnClickPendingIntent(R.id.laptop_widget_choose, widgetActivity(context, id, "laptop-target"))
-            if (choosing && size.width < 220) view.setViewVisibility(R.id.laptop_widget_power, View.GONE)
-            view.setTextViewCompoundDrawables(R.id.laptop_widget_connection, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
-            manager.updateAppWidget(id,view)
+            val views = widgetViews(context, manager, id) { size ->
+                val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
+                val showMetrics = size.width >= 216 * fontScale
+                val showSync = showMetrics && size.height >= 240 * fontScale && saved.receivedAt > 0
+                val showElapsed = size.height >= 260 * fontScale && showSync && System.currentTimeMillis() >= saved.receivedAt
+                val view=RemoteViews(context.packageName,R.layout.pingora_laptop_widget)
+                if (size.height < 160) {
+                    val density = context.resources.displayMetrics.density
+                    val horizontal = (14 * density).toInt()
+                    val vertical = (6 * density).toInt()
+                    view.setViewPadding(R.id.widget_root, horizontal, vertical, horizontal, vertical)
+                }
+                view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id))
+                view.setOnClickPendingIntent(R.id.laptop_widget_power, widgetOpenApp(context, id))
+                val metricsVisibility = if (showMetrics) View.VISIBLE else View.GONE
+                view.setViewVisibility(R.id.laptop_widget_cpu_column, metricsVisibility)
+                view.setViewVisibility(R.id.laptop_widget_ram_column, metricsVisibility)
+                val (cpu, ram) = metricValues(status)
+                view.setTextViewText(R.id.laptop_widget_cpu, cpu)
+                view.setTextViewText(R.id.laptop_widget_ram, ram)
+                view.setTextViewText(R.id.laptop_widget_name,peer?.name ?: "Laptop status")
+                view.setTextViewText(R.id.laptop_widget_battery,if(level in 0..100) "$level%" else "—")
+                view.setTextViewText(R.id.laptop_widget_connection,when {peer==null->if(peers.isEmpty()) "Pair in Pingora" else "Choose a laptop";peer.isReachable!=true->"Offline · Saved reading";!fresh->"Updating · Saved reading";else->peer.connectionLabel})
+                view.setTextViewText(R.id.laptop_widget_internet,(if(battery?.optBoolean("charging")==true) "Charging · " else "")+when(status.optString("internet")) {"full"->"Internet online";"portal"->"Sign-in needed";"limited"->"Internet limited";"none"->"No internet";else->"Internet unknown"})
+                val profile=status.optString("power_profile")
+                view.setImageViewResource(R.id.laptop_widget_power,when(profile) {"power-saver"->R.drawable.ic_profile_saver;"performance"->R.drawable.ic_profile_performance;else->R.drawable.ic_profile_balanced})
+                view.setViewVisibility(R.id.laptop_widget_power,if(profile in listOf("power-saver","balanced","performance")) android.view.View.VISIBLE else View.GONE)
+                view.setContentDescription(R.id.laptop_widget_power,"Last reported profile: ${profileLabel(profile)}")
+                view.setTextViewText(R.id.laptop_widget_lid,if(slumber?.optBoolean("available")==true) "Lid mode · ${slumber.optString("lid_action","unknown")}" else "Lid mode unavailable")
+                view.setTextViewText(R.id.laptop_widget_age,if(saved.receivedAt>0) "Last sync · ${android.text.format.DateFormat.format("d MMM, HH:mm",saved.receivedAt)}" else "Not synced yet")
+                view.setChronometer(R.id.laptop_widget_elapsed,SystemClock.elapsedRealtime()-(System.currentTimeMillis()-saved.receivedAt).coerceAtLeast(0),"%s since last sync",showElapsed)
+                val intent=Intent(context,LaptopWidget::class.java).setAction(ACTION).putExtra("widget",id).putExtra("command","refresh")
+                view.setOnClickPendingIntent(R.id.laptop_widget_refresh,PendingIntent.getBroadcast(context,id*4,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+                view.setViewVisibility(R.id.laptop_widget_internet, if (size.height >= 152 * fontScale && saved.receivedAt > 0) View.VISIBLE else View.GONE)
+                view.setViewVisibility(R.id.laptop_widget_age, if (showSync) View.VISIBLE else View.GONE)
+                view.setViewVisibility(R.id.laptop_widget_elapsed, if (showElapsed) View.VISIBLE else View.GONE)
+                view.setViewVisibility(R.id.laptop_widget_lid, if (showSync && size.height >= 285 * fontScale && slumber?.optBoolean("available") == true) View.VISIBLE else View.GONE)
+                view.setViewVisibility(R.id.laptop_widget_connection, if (size.height >= 145 || !fresh || peer?.usesPrivateVpn == true) View.VISIBLE else View.GONE)
+                val choosing = peers.size > 1 || peer == null && peers.isNotEmpty()
+                view.setViewVisibility(R.id.laptop_widget_choose, if (choosing) View.VISIBLE else View.GONE)
+                view.setOnClickPendingIntent(R.id.laptop_widget_choose, widgetActivity(context, id, "laptop-target"))
+                if (size.width < (if (choosing) 248 else 216) * fontScale) view.setViewVisibility(R.id.laptop_widget_power, View.GONE)
+                view.setTextViewCompoundDrawables(R.id.laptop_widget_connection, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
+                view
+            }
+            manager.updateAppWidget(id, views)
         }
     }
     override fun onReceive(context: Context, intent: Intent) {
