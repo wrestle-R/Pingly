@@ -71,6 +71,8 @@ class Device : PacketReceiver {
     private val links = CopyOnWriteArrayList<BaseLink>()
     val usesPrivateVpn: Boolean
         get() = (links.firstOrNull() as? org.kde.kdeconnect.backends.lan.LanLink)?.usesPrivateVpn == true
+    internal val usesTailscale: Boolean
+        get() = (links.firstOrNull() as? org.kde.kdeconnect.backends.lan.LanLink)?.usesTailscale == true
 
     private val _isReachableFlow = MutableStateFlow(false)
 

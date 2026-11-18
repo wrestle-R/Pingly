@@ -25,13 +25,16 @@ import org.kde.kdeconnect.helpers.LineTooLongException
 import org.kde.kdeconnect.helpers.ThreadHelper
 import org.kde.kdeconnect.helpers.readLineBounded
 import org.kde.kdeconnect.helpers.isCGNAT
+import org.kde.kdeconnect.helpers.isTailscaleIpv6
 import org.kde.kdeconnect.helpers.security.SslHelper.convertToSslSocket
 import java.io.BufferedInputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.net.InetSocketAddress
+import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.security.cert.CertificateException
 import javax.net.ssl.SSLHandshakeException
@@ -50,7 +53,26 @@ class LanLink(
     val usesPrivateVpn: Boolean
         get() {
             val current = socket
-            return current.localAddress.isCGNAT && current.inetAddress.isCGNAT
+            return (current.localAddress.isCGNAT && current.inetAddress.isCGNAT) ||
+                (current.localAddress.isTailscaleIpv6 && current.inetAddress.isTailscaleIpv6)
+        }
+
+    internal val usesTailscale: Boolean
+        get() {
+            val current = socket
+            val local = current.localAddress
+            val peer = current.inetAddress
+            if (local.isTailscaleIpv6 && peer.isTailscaleIpv6) return true
+            if (!local.isCGNAT || !peer.isCGNAT) return false
+
+            // The IPv4 range is shared. Check the IPv6 prefix on this socket's interface.
+            return try {
+                NetworkInterface.getByInetAddress(local)?.inetAddresses?.asSequence()?.any { it.isTailscaleIpv6 } == true
+            } catch (_: SocketException) {
+                false
+            } catch (_: SecurityException) {
+                false
+            }
         }
 
     override fun disconnect() {

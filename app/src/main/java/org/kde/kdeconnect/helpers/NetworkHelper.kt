@@ -66,6 +66,11 @@ val InetAddress.isCGNAT: Boolean
         return firstOctet == 100 && (secondOctet and 0xC0) == 0x40
     }
 
+private val tailscaleIpv6Prefix = byteArrayOf(0xfd.toByte(), 0x7a, 0x11, 0x5c, 0xa1.toByte(), 0xe0.toByte())
+
+/** Tailscale's device IPv6 addresses share this unique local /48 prefix. */
+internal val InetAddress.isTailscaleIpv6: Boolean
+    get() = this is Inet6Address && address.copyOf(tailscaleIpv6Prefix.size).contentEquals(tailscaleIpv6Prefix)
 
 /**
  * Returns true if the given address is in the IPv6 Unique Local Address space (fc00::/7)

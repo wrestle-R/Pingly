@@ -38,6 +38,7 @@ internal fun widgetViews(
 internal val Device.connectionLabel: String
     get() = when {
         !isReachable -> "Offline"
+        usesTailscale -> "Connected via Tailscale"
         usesPrivateVpn -> "Connected via VPN"
         else -> "Connected"
     }

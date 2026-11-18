@@ -40,6 +40,13 @@ internal class NetworkHelperTest {
     }
 
     @Test
+    fun distinguishesTailscaleIpv6FromOtherPrivateAddresses() {
+        assertTrue(InetAddress.getByName("fd7a:115c:a1e0::42").isTailscaleIpv6)
+        assertFalse(InetAddress.getByName("fd7a:115c:a1e1::42").isTailscaleIpv6)
+        assertFalse(InetAddress.getByName("100.100.42.1").isTailscaleIpv6)
+    }
+
+    @Test
     @Throws(Exception::class)
     fun testCGNATUpperBound() {
         val address = InetAddress.getByName("100.127.255.255")

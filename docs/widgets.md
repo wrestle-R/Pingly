@@ -27,7 +27,7 @@ Set the optional `status_helper` to an absolute path to a separate read-only exe
 
 ## Different networks
 
-Connect the phone and laptop to the same Tailscale network. Keep Pingora running on the laptop, then add the laptop's Tailscale IPv4 address in **Settings → Private network addresses** on the phone. Pair in Pingora if the devices are new. The VPN shield identifies a connection between Tailscale-range addresses. See [Tailscale's device connection guide](https://tailscale.com/docs/how-to/connect-to-devices).
+Connect the phone and laptop to the same Tailscale network. Keep Pingora running on the laptop, then add the laptop's Tailscale IPv4 address in **Settings → Private network addresses** on the phone. Pair in Pingora if the devices are new. The shield and **Connected via Tailscale** label identify a link through the Tailscale interface. See [Tailscale's device connection guide](https://tailscale.com/docs/how-to/connect-to-devices).
 
 ## Desktop background connection
 

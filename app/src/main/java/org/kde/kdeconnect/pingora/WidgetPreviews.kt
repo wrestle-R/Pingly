@@ -35,16 +35,18 @@ object WidgetPreviews {
     private fun preview(context: Context, laptop: Boolean): RemoteViews {
         if (!laptop) return RemoteViews(context.packageName, R.layout.pingora_clipboard_widget_compact)
         return RemoteViews(context.packageName, R.layout.pingora_devices_widget).apply {
-            addView(R.id.devices_widget_rows, deviceWidgetRow(context, "Laptop", "Connected", "84%"))
+            addView(R.id.devices_widget_rows, deviceWidgetRow(context, "Laptop", "Connected", "84%", "CPU 12% · RAM 37%"))
             addView(R.id.devices_widget_rows, deviceWidgetRow(context, "InstaBox", "Offline", ""))
         }
     }
 }
 
-internal fun deviceWidgetRow(context: Context, name: String, status: String, reading: String) =
+internal fun deviceWidgetRow(context: Context, name: String, status: String, battery: String, usage: String = "") =
     RemoteViews(context.packageName, R.layout.pingora_devices_widget_row).apply {
         setTextViewText(R.id.devices_widget_name, name)
         setTextViewText(R.id.devices_widget_status, status)
-        setTextViewText(R.id.devices_widget_reading, reading)
-        setViewVisibility(R.id.devices_widget_reading, if (reading.isEmpty()) View.GONE else View.VISIBLE)
+        setTextViewText(R.id.devices_widget_reading, battery)
+        setViewVisibility(R.id.devices_widget_reading, if (battery.isEmpty()) View.GONE else View.VISIBLE)
+        setTextViewText(R.id.devices_widget_usage, usage)
+        setViewVisibility(R.id.devices_widget_usage, if (usage.isEmpty()) View.GONE else View.VISIBLE)
     }

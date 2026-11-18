@@ -119,19 +119,21 @@ class LaptopWidget : AppWidgetProvider() {
         view.setOnClickPendingIntent(R.id.laptop_widget_refresh, refreshIntent(context, id))
         val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
         val maxRows = if (size.height >= 240 * fontScale) 4 else 2
-        if (peers.size > maxRows) view.setTextViewText(R.id.devices_widget_title, "Devices (+${peers.size - maxRows})")
         view.removeAllViews(R.id.devices_widget_rows)
         for (peer in peers.take(maxRows)) {
             val saved = LaptopTelemetry.read(context, peer.deviceId)
             val data = saved.data
             val level = data.optJSONObject("battery")?.optInt("level", -1) ?: -1
-            val status = if (peer.isReachable && peer.getPlugin<BridgePlugin>()?.isReady != true) "Connecting…" else peer.connectionLabel
-            val reading = when {
-                level in 0..100 -> "$level%"
-                size.width >= 270 * fontScale && saved.receivedAt > 0 -> metrics(data)
-                else -> ""
+            val connection = if (peer.isReachable && peer.getPlugin<BridgePlugin>()?.isReady != true) "Connecting…" else peer.connectionLabel
+            val status = if (size.width < 280 * fontScale) connection.removePrefix("Connected via ") else connection
+            val battery = if (level in 0..100) "$level%" else ""
+            val usage = if (size.width >= 220 * fontScale) {
+                val (cpu, ram) = metricValues(data)
+                if (cpu != "—" || ram != "—") "CPU $cpu · RAM $ram" else ""
+            } else {
+                ""
             }
-            val row = deviceWidgetRow(context, peer.name, status, reading)
+            val row = deviceWidgetRow(context, peer.name, status, battery, usage)
             row.setTextViewCompoundDrawables(R.id.devices_widget_status, if (peer.usesPrivateVpn) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
             row.setOnClickPendingIntent(R.id.devices_widget_row, widgetOpenApp(context, id, peer.deviceId))
             view.addView(R.id.devices_widget_rows, row)
