@@ -32,9 +32,8 @@ class ClipboardSendActivity : AppCompatActivity() {
     private fun prepare() {
         val peers = KdeConnect.getInstance().devices.values.filter { it.isPaired }
             .sortedWith(compareBy({ it.name.lowercase() }, { it.deviceId }))
-        val laptop = intent.action?.endsWith(".laptop-target") == true
-        val choose = laptop || intent.action?.endsWith(".clipboard-target") == true
-        val key = if (laptop) "peer.$widgetId" else "clipboard.$widgetId"
+        val choose = intent.action?.endsWith(".clipboard-target") == true
+        val key = "clipboard.$widgetId"
         val hint = intent.getStringExtra("peer") ?: widgetPreferences(this).getString(key, null)
         val target = if (hint == null) peers.singleOrNull() else peers.firstOrNull { it.deviceId == hint }
         if (peers.isEmpty()) {
@@ -49,7 +48,6 @@ class ClipboardSendActivity : AppCompatActivity() {
                     if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
                         widgetPreferences(this).edit().putString(key, peer.deviceId).apply()
                         ClipboardWidget.refresh(this)
-                        LaptopWidget.refresh(this)
                     }
                     if (choose) finish() else {
                         chosen = peer

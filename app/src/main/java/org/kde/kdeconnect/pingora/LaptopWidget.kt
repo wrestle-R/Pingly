@@ -131,11 +131,7 @@ class LaptopWidget : AppWidgetProvider() {
                 size.width >= 270 * fontScale && saved.receivedAt > 0 -> metrics(data)
                 else -> ""
             }
-            val row = RemoteViews(context.packageName, R.layout.pingora_devices_widget_row)
-            row.setTextViewText(R.id.devices_widget_name, peer.name)
-            row.setTextViewText(R.id.devices_widget_status, status)
-            row.setTextViewText(R.id.devices_widget_reading, reading)
-            row.setViewVisibility(R.id.devices_widget_reading, if (reading.isEmpty()) View.GONE else View.VISIBLE)
+            val row = deviceWidgetRow(context, peer.name, status, reading)
             row.setTextViewCompoundDrawables(R.id.devices_widget_status, if (peer.usesPrivateVpn) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
             row.setOnClickPendingIntent(R.id.devices_widget_row, widgetOpenApp(context, id, peer.deviceId))
             view.addView(R.id.devices_widget_rows, row)

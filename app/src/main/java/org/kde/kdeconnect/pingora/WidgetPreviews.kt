@@ -32,17 +32,19 @@ object WidgetPreviews {
         }, null)
     }
 
-    private fun preview(context: Context, laptop: Boolean): RemoteViews =
-        RemoteViews(context.packageName, if (laptop) R.layout.pingora_laptop_widget else R.layout.pingora_clipboard_widget_compact).apply {
-            if (laptop) {
-                setTextViewText(R.id.laptop_widget_name, "My laptop")
-                setTextViewText(R.id.laptop_widget_battery, "84%")
-                setTextViewText(R.id.laptop_widget_cpu, "12%")
-                setTextViewText(R.id.laptop_widget_ram, "37%")
-                setTextViewText(R.id.laptop_widget_connection, "Connected")
-                setTextViewText(R.id.laptop_widget_internet, "Internet online")
-                setViewVisibility(R.id.laptop_widget_internet, View.VISIBLE)
-                setViewVisibility(R.id.laptop_widget_power, View.VISIBLE)
-            }
+    private fun preview(context: Context, laptop: Boolean): RemoteViews {
+        if (!laptop) return RemoteViews(context.packageName, R.layout.pingora_clipboard_widget_compact)
+        return RemoteViews(context.packageName, R.layout.pingora_devices_widget).apply {
+            addView(R.id.devices_widget_rows, deviceWidgetRow(context, "Laptop", "Connected", "84%"))
+            addView(R.id.devices_widget_rows, deviceWidgetRow(context, "InstaBox", "Offline", ""))
         }
+    }
 }
+
+internal fun deviceWidgetRow(context: Context, name: String, status: String, reading: String) =
+    RemoteViews(context.packageName, R.layout.pingora_devices_widget_row).apply {
+        setTextViewText(R.id.devices_widget_name, name)
+        setTextViewText(R.id.devices_widget_status, status)
+        setTextViewText(R.id.devices_widget_reading, reading)
+        setViewVisibility(R.id.devices_widget_reading, if (reading.isEmpty()) View.GONE else View.VISIBLE)
+    }
