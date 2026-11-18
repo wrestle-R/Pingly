@@ -20,6 +20,7 @@ import org.kde.kdeconnect.KdeConnect
 import org.kde.kdeconnect.pingora.BridgePlugin
 import org.kde.kdeconnect.pingora.SharingPolicy
 import org.kde.kdeconnect.pingora.connectionLabel
+import org.kde.kdeconnect.pingora.withoutOfflineDuplicates
 
 class SharingFragment : Fragment() {
     private var selectedPeer: String? = null
@@ -177,7 +178,7 @@ class SharingFragment : Fragment() {
             layout.removeView(connectionLabel)
             cardContent.addView(connectionLabel)
         } else text("Settings", true)
-        val visibleDevices=devices.filter {it.isReachable || devices.none {other->other.name==it.name && other.isReachable}}
+        val visibleDevices = devices.withoutOfflineDuplicates()
         if(visibleDevices.size>1) button("Switch laptop") {
             com.google.android.material.dialog.MaterialAlertDialogBuilder(context).setTitle("Choose a laptop")
                 .setItems(visibleDevices.map {"${it.name} · ${if(it.isReachable) "Connected" else "Saved offline"} · ${it.deviceId.takeLast(6)}"}.toTypedArray()) {_,index -> selectedPeer=visibleDevices[index].deviceId; render()}.show()

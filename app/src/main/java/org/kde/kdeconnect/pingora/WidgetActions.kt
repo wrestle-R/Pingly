@@ -42,6 +42,11 @@ internal val Device.connectionLabel: String
         else -> "Connected"
     }
 
+internal fun List<Device>.withoutOfflineDuplicates(): List<Device> {
+    val reachableNames = filter { it.isReachable }.mapTo(HashSet()) { it.name }
+    return filter { it.isReachable || it.name !in reachableNames }
+}
+
 internal fun widgetPreferences(context: Context) =
     context.getSharedPreferences("pingora_widgets", Context.MODE_PRIVATE)
 

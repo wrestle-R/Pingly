@@ -46,7 +46,7 @@ class LaptopWidget : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
         val preferences=context.getSharedPreferences("pingora_widgets",Context.MODE_PRIVATE)
-        val peers=KdeConnect.getInstance().devices.values.filter {it.isPaired}
+        val peers = KdeConnect.getInstance().devices.values.filter { it.isPaired }.withoutOfflineDuplicates()
         for(id in ids) {
             var target=preferences.getString("peer.$id",null)
             if(target==null) {
@@ -54,7 +54,7 @@ class LaptopWidget : AppWidgetProvider() {
                 if(target!=null) preferences.edit().putString("peer.$id",target).apply()
             }
             if (peers.size > 1) {
-                val ordered = peers.sortedWith(compareBy({ it.name.lowercase(java.util.Locale.ROOT) }, { it.deviceId }))
+                val ordered = peers.sortedWith(compareBy({ !it.isReachable }, { it.name.lowercase(java.util.Locale.ROOT) }, { it.deviceId }))
                 val views = widgetViews(context, manager, id) { devicesView(context, id, ordered, it) }
                 manager.updateAppWidget(id, views)
                 continue
