@@ -45,13 +45,18 @@ internal val Device.connectionLabel: String
 internal fun widgetPreferences(context: Context) =
     context.getSharedPreferences("pingora_widgets", Context.MODE_PRIVATE)
 
-internal fun widgetOpenApp(context: Context, id: Int): PendingIntent =
-    PendingIntent.getActivity(context, id, Intent(context, MainActivity::class.java)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        .putExtra("pingora_sharing", true)
-        .putExtra("pingora_peer", widgetPreferences(context).let {
-            it.getString("peer.$id", null) ?: it.getString("clipboard.$id", null)
-        }), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+internal fun widgetOpenApp(
+    context: Context,
+    id: Int,
+    peer: String? = widgetPreferences(context).let {
+        it.getString("peer.$id", null) ?: it.getString("clipboard.$id", null)
+    },
+): PendingIntent = PendingIntent.getActivity(context, id, Intent(context, MainActivity::class.java)
+    .setData(android.net.Uri.Builder().scheme("pingora-widget").authority("open")
+        .appendPath(id.toString()).appendPath(peer.orEmpty()).build())
+    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+    .putExtra("pingora_sharing", true).putExtra("pingora_peer", peer),
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
 internal fun widgetActivity(context: Context, id: Int, action: String): PendingIntent =
     PendingIntent.getActivity(context, id, Intent(context, ClipboardSendActivity::class.java)

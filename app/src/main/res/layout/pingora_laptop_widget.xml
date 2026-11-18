@@ -10,9 +10,6 @@
             <ImageView android:id="@+id/laptop_widget_power" android:layout_width="32dp" android:layout_height="42dp"
                 android:scaleType="center" android:src="@drawable/ic_profile_balanced" android:tint="@color/widget_foreground"
                 android:contentDescription="Power profile unavailable" android:visibility="gone" />
-            <ImageButton android:id="@+id/laptop_widget_choose" android:layout_width="40dp" android:layout_height="42dp"
-                android:src="@drawable/ic_widget_devices" android:contentDescription="Choose laptop"
-                android:background="@android:color/transparent" android:visibility="gone" />
             <ImageButton android:id="@+id/laptop_widget_refresh" android:layout_width="42dp" android:layout_height="42dp"
                 android:scaleType="center" android:src="@drawable/ic_refresh_24dp" android:contentDescription="Refresh laptop status"
                 android:background="@android:color/transparent" android:tint="@color/widget_foreground" />

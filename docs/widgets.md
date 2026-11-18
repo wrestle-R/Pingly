@@ -1,6 +1,6 @@
 # Android widgets
 
-Add the widgets from Pingora Settings or your launcher's widget picker. Tap either widget's body to open Pingora. When you pair more than one laptop, use the devices icon to choose which laptop each widget uses.
+Add the widgets from Pingora Settings or your launcher's widget picker. Tap either widget's body to open Pingora. The Devices widget lists paired devices together. Use the devices icon on the Clipboard widget to pick a send destination.
 
 ## Clipboard
 
@@ -8,14 +8,20 @@ Unlock the phone and tap **Send clipboard**. The button shows **Sending…** and
 
 The Android sender accepts text up to 16 KiB, or PNG, JPEG, WebP, and GIF up to 4 MiB when the copying app exposes the image through Android's clipboard. Use matching Android and desktop builds for images. The image is transferred in memory through the paired connection. Paste it into a desktop app that accepts its format. Pingora keeps no clipboard history.
 
-## Laptop status
+## Devices and laptop status
 
-The compact widget prioritizes the laptop name, battery and refresh button. Wider layouts show CPU and RAM. Taller layouts add internet status, the last-sync time, elapsed time, and the lid setting when available. Offline readings come from the most recent saved snapshot.
+With one paired device, the widget shows the laptop readings. With two, the widget shows both device names and connection states together. Tap a row to open that device, or tap refresh to request readings from the connected devices. The compact single-device view prioritizes the laptop name, battery and refresh button. Wider layouts show CPU and RAM. Taller layouts add internet status, the last-sync time, elapsed time, and the lid setting when available. Offline readings come from the most recent saved snapshot.
 
 - Use refresh to request status without opening the app.
 - Open **Power & lid controls** in Pingora to change the profile or choose what happens when you close the lid.
 
 Power profiles require `powerprofilesctl` and a working power-profiles service. Internet status comes from NetworkManager. Slumber lid controls use the narrow IPC adapter documented under the release tools.
+
+## InstaBox Resume
+
+The launcher has a separate **InstaBox Resume** widget with one button. It sends a wake request over Pingora’s paired connection to an always-available desktop acting as the relay. Keep that desktop running and reachable when the InstaBox is paused. The button confirms when the relay accepts the wake request. Watch the VM’s own connection row for it to come online.
+
+The desktop enables this feature only when its private app data directory contains an `instabox-resume.json` file with mode `0600`. On Linux the directory is normally `~/.local/share/io.github.wrestle-r.pingora`. Set `phone_id` to the exact stable ID of the authorized paired phone and `helper` to an absolute path to a local executable that resumes one preconfigured InstaBox. Restart Pingora Desktop after configuring it. The helper takes no arguments. It reports accepted requests as JSON with `type: "resume"`, `http_status: "200"` or `"202"`, and `has_error: false`. Keep the provider credential with the relay helper. The Android app receives the request result and never needs that credential.
 
 ## Different networks
 

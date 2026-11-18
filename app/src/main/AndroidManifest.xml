@@ -29,6 +29,10 @@ Pingora modification: build-path probe with no plugin components or broad permis
             <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
         </service>
         <receiver android:name="org.kde.kdeconnect.pingora.MirrorDismissReceiver" android:exported="false" />
+        <receiver android:name="org.kde.kdeconnect.pingora.ResumeWidget" android:exported="false" android:label="InstaBox Resume">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/pingora_resume_widget" />
+        </receiver>
         <receiver android:name="org.kde.kdeconnect.pingora.ClipboardWidget" android:exported="false" android:label="Pingora clipboard">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/pingora_clipboard_widget" />
@@ -37,7 +41,7 @@ Pingora modification: build-path probe with no plugin components or broad permis
             <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
         </service>
         <service android:name="org.kde.kdeconnect.BackgroundService" android:foregroundServiceType="connectedDevice" android:icon="@drawable/ic_notification" android:enabled="true" />
-        <receiver android:name="org.kde.kdeconnect.pingora.LaptopWidget" android:exported="false" android:label="Laptop status">
+        <receiver android:name="org.kde.kdeconnect.pingora.LaptopWidget" android:exported="false" android:label="Pingora devices">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/pingora_laptop_widget" />
         </receiver>

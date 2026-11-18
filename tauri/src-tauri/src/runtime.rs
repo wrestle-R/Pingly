@@ -46,6 +46,7 @@ pub struct Runtime {
     store: Mutex<Store>,
     live: Mutex<Live>,
     path: PathBuf,
+    resume_relay: Option<crate::instabox_resume::ResumeRelay>,
     update: Mutex<Option<crate::updates::Candidate>>,
     sequence: std::sync::atomic::AtomicU64,
     pub stop: AtomicBool,
@@ -90,6 +91,9 @@ impl Runtime {
             store: Mutex::new(store),
             live: Mutex::new(Live::default()),
             path: file,
+            resume_relay: crate::instabox_resume::ResumeRelay::load(
+                &path.join("instabox-resume.json"),
+            ),
             update: Mutex::new(None),
             sequence: std::sync::atomic::AtomicU64::new(1),
             stop: AtomicBool::new(false),
@@ -378,7 +382,7 @@ impl Runtime {
         self.send(
             id,
             "policy",
-            json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true}),
+            json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id)}),
         )
         .ok();
         Ok(())
@@ -428,6 +432,18 @@ impl Runtime {
         s.clear();
         self.save(&s)
     }
+    fn can_resume_from(&self, id: &str) -> bool {
+        self.resume_relay
+            .as_ref()
+            .is_some_and(|relay| relay.permits(id))
+            && self
+                .store
+                .lock()
+                .ok()
+                .and_then(|store| store.policies.get(id).map(|policy| !policy.paused))
+                .unwrap_or(false)
+    }
+
     fn allowed(&self, id: &str, feature: Feature) -> bool {
         self.store
             .lock()
@@ -660,7 +676,7 @@ impl Runtime {
         }
     }
 
-    fn receive(&self, id: &str, packet: Envelope) {
+    fn receive(self: &Arc<Self>, id: &str, packet: Envelope) {
         if packet.kind == "hello" {
             let Some(remote) = packet.data["token"].as_str().filter(|s| s.len() == 48) else {
                 return;
@@ -717,7 +733,7 @@ impl Runtime {
                 self.send(
                     id,
                     "policy",
-                    json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true}),
+                    json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id)}),
                 )
                 .ok();
                 self.send(id, "sync", json!({})).ok();
@@ -725,6 +741,32 @@ impl Runtime {
             return;
         }
         match packet.kind.as_str() {
+            "instabox_resume" if self.can_resume_from(id) => {
+                let remote_allowed = self
+                    .live
+                    .lock()
+                    .ok()
+                    .and_then(|live| live.remote_policies.get(id).map(|policy| !policy.paused))
+                    .unwrap_or(false);
+                if let (true, Some(request)) = (remote_allowed, receipt(&packet.data)) {
+                    let runtime = Arc::clone(self);
+                    let id = id.to_owned();
+                    let request = request.to_owned();
+                    std::thread::spawn(move || {
+                        let state = runtime
+                            .resume_relay
+                            .as_ref()
+                            .map_or("denied", |relay| relay.request(&id));
+                        runtime
+                            .send(
+                                &id,
+                                "instabox_resume_result",
+                                json!({"receipt":request,"state":state}),
+                            )
+                            .ok();
+                    });
+                }
+            }
             "notification_action" if self.permitted(id, Feature::Notifications) => {
                 let result = self.desktop_dismiss(&packet.data);
                 self.send(

@@ -37,6 +37,11 @@ class BridgePlugin : Plugin() {
     )
 
     internal val clipboard by lazy { ClipboardTransfer(context, this) }
+    internal val peerId get() = device.deviceId
+    internal val canResumeInstabox
+        get() = isReady && remotePolicy.optBoolean("instabox_resume")
+            && !remotePolicy.optBoolean("paused", true)
+            && !SharingPolicy.preferences(context).getBoolean("${device.deviceId}.paused", false)
     val supportsClipboardReceipts get() = remotePolicy.optBoolean("clipboard_receipts")
     val files by lazy { FileTransfers(context,this) }
     @Volatile var laptopStatus: JSONObject = JSONObject(); private set
@@ -151,6 +156,7 @@ class BridgePlugin : Plugin() {
             remote = token; policyChanged(); return true
         }
         when (kind) {
+            "instabox_resume_result" -> ResumeWidget.result(context, device.deviceId, data)
             "clipboard_receipt" -> clipboard.receive(data)
             "notice_ack" -> PingoraNotificationListener.instance?.acknowledge(device.deviceId,data.optString("source"),data.optString("version"))
             "notice" -> if(allows("notifications"))LocalInbox.receive(context,device.deviceId,data)
