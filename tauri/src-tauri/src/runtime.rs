@@ -382,7 +382,7 @@ impl Runtime {
         self.send(
             id,
             "policy",
-            json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id)}),
+            json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id),"instabox_status":self.can_resume_from(id) && self.resume_relay.as_ref().is_some_and(|relay| relay.status_available())}),
         )
         .ok();
         Ok(())
@@ -733,7 +733,7 @@ impl Runtime {
                 self.send(
                     id,
                     "policy",
-                    json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id)}),
+                    json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id),"instabox_status":self.can_resume_from(id) && self.resume_relay.as_ref().is_some_and(|relay| relay.status_available())}),
                 )
                 .ok();
                 self.send(id, "sync", json!({})).ok();
@@ -741,7 +741,8 @@ impl Runtime {
             return;
         }
         match packet.kind.as_str() {
-            "instabox_resume" if self.can_resume_from(id) => {
+            "instabox_resume" | "instabox_status" if self.can_resume_from(id) => {
+                let wake = packet.kind == "instabox_resume";
                 let remote_allowed = self
                     .live
                     .lock()
@@ -753,10 +754,13 @@ impl Runtime {
                     let id = id.to_owned();
                     let request = request.to_owned();
                     std::thread::spawn(move || {
-                        let state = runtime
-                            .resume_relay
-                            .as_ref()
-                            .map_or("denied", |relay| relay.request(&id));
+                        let state = runtime.resume_relay.as_ref().map_or("denied", |relay| {
+                            if wake {
+                                relay.request(&id)
+                            } else {
+                                relay.status(&id)
+                            }
+                        });
                         runtime
                             .send(
                                 &id,

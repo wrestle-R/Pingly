@@ -19,9 +19,11 @@ Power profiles require `powerprofilesctl` and a working power-profiles service. 
 
 ## InstaBox Resume
 
-The launcher has a separate **InstaBox Resume** widget with one button. It sends a wake request over Pingora’s paired connection to an always-available desktop acting as the relay. Keep that desktop running and reachable when the InstaBox is paused. The button confirms when the relay accepts the wake request. Watch the VM’s own connection row for it to come online.
+The **InstaBox Resume** widget sends a wake request over Pingora’s paired connection to the desktop relay. Keep the relay running and reachable while the InstaBox is paused. Tap refresh to check the VM without waking it. When the relay confirms the VM is reachable, the widget shows **Running** and disables the wake button. After a wake request, the widget checks again for the VM to come online.
 
 The desktop enables this feature only when its private app data directory contains an `instabox-resume.json` file with mode `0600`. On Linux the directory is normally `~/.local/share/io.github.wrestle-r.pingora`. Set `phone_id` to the exact stable ID of the authorized paired phone and `helper` to an absolute path to a local executable that resumes one preconfigured InstaBox. Restart Pingora Desktop after configuring it. The helper takes no arguments. It reports accepted requests as JSON with `type: "resume"`, `http_status: "200"` or `"202"`, and `has_error: false`. Keep the provider credential with the relay helper. The Android app receives the request result and never needs that credential.
+
+Set the optional `status_helper` to an absolute path to a separate read-only executable. It takes no arguments and returns exit code `0` when it confirms the VM is running. An SSH check can use `BatchMode=yes`, `ControlPath=none`, and a short connect timeout. A failed check yields **Status unknown**. The relay checks once more before waking and skips the wake when the VM is already reachable.
 
 ## Different networks
 

@@ -14,11 +14,13 @@ use std::{
 struct Config {
     phone_id: String,
     helper: PathBuf,
+    status_helper: Option<PathBuf>,
 }
 
 pub struct ResumeRelay {
     config: Config,
     last_request: Mutex<Option<Instant>>,
+    last_status: Mutex<Option<(Instant, bool)>>,
 }
 
 impl ResumeRelay {
@@ -37,15 +39,65 @@ impl ResumeRelay {
                 .phone_id
                 .bytes()
                 .all(|b| b.is_ascii_alphanumeric() || matches!(b, b'-' | b'_'))
-            || !config.helper.is_absolute()
-            || !fs::metadata(&config.helper).ok()?.is_file()
+            || !Self::valid_helper(&config.helper)
+            || config
+                .status_helper
+                .as_deref()
+                .is_some_and(|path| !Self::valid_helper(path))
         {
             return None;
         }
         Some(Self {
             config,
             last_request: Mutex::new(None),
+            last_status: Mutex::new(None),
         })
+    }
+
+    fn valid_helper(path: &Path) -> bool {
+        path.is_absolute()
+            && fs::metadata(path).is_ok_and(|m| m.is_file() && m.permissions().mode() & 0o111 != 0)
+    }
+
+    pub fn status_available(&self) -> bool {
+        self.config.status_helper.is_some()
+    }
+
+    pub fn status(&self, peer: &str) -> &'static str {
+        if !self.permits(peer) {
+            return "denied";
+        }
+        self.probe(false)
+    }
+
+    fn probe(&self, fresh: bool) -> &'static str {
+        let Some(helper) = &self.config.status_helper else {
+            return "unavailable";
+        };
+        let Ok(mut cached) = self.last_status.lock() else {
+            return "unknown";
+        };
+        if !fresh {
+            if let Some((at, running)) = *cached {
+                if at.elapsed() < Duration::from_secs(5) {
+                    return if running { "running" } else { "unknown" };
+                }
+            }
+        }
+        let running = Command::new("/usr/bin/timeout")
+            .arg("8s")
+            .arg(helper)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok_and(|exit| exit.success());
+        *cached = Some((Instant::now(), running));
+        if running {
+            "running"
+        } else {
+            "unknown"
+        }
     }
 
     pub fn permits(&self, peer: &str) -> bool {
@@ -64,6 +116,10 @@ impl ResumeRelay {
         }
         *last = Some(Instant::now());
         drop(last);
+
+        if self.probe(true) == "running" {
+            return "running";
+        }
 
         // The enrolled peer cannot supply a command, argument, or machine ID.
         let output = Command::new("/usr/bin/timeout")
@@ -86,6 +142,9 @@ impl ResumeRelay {
                     )
             });
         if accepted {
+            if let Ok(mut cached) = self.last_status.lock() {
+                *cached = None;
+            }
             "requested"
         } else {
             "failed"
@@ -117,6 +176,19 @@ mod tests {
         assert_eq!(relay.request("other-phone"), "denied");
         assert_eq!(relay.request("owner-phone"), "requested");
         assert_eq!(relay.request("owner-phone"), "busy");
+        let status = dir.join("status");
+        fs::write(&status, "#!/bin/sh\nexit 0").unwrap();
+        fs::set_permissions(&status, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::write(
+            &config,
+            serde_json::json!({"phone_id":"owner-phone","helper":helper,"status_helper":status})
+                .to_string(),
+        )
+        .unwrap();
+        let relay = ResumeRelay::load(&config).unwrap();
+        assert_eq!(relay.status("other-phone"), "denied");
+        assert_eq!(relay.status("owner-phone"), "running");
+        assert_eq!(relay.request("owner-phone"), "running");
         fs::remove_dir_all(dir).unwrap();
     }
 }

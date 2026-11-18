@@ -42,6 +42,7 @@ class BridgePlugin : Plugin() {
         get() = isReady && remotePolicy.optBoolean("instabox_resume")
             && !remotePolicy.optBoolean("paused", true)
             && !SharingPolicy.preferences(context).getBoolean("${device.deviceId}.paused", false)
+    internal val canCheckInstabox get() = canResumeInstabox && remotePolicy.optBoolean("instabox_status")
     val supportsClipboardReceipts get() = remotePolicy.optBoolean("clipboard_receipts")
     val files by lazy { FileTransfers(context,this) }
     @Volatile var laptopStatus: JSONObject = JSONObject(); private set
@@ -179,7 +180,7 @@ class BridgePlugin : Plugin() {
                 LaptopTelemetry.save(context,device.deviceId,laptopStatus)
                 LaptopWidget.refresh(context)
             }
-            "policy" -> { remotePolicy = data; if(LaptopWidget.hasWidgets(context)) requestLaptopStatus(); LaptopWidget.refresh(context); ClipboardWidget.refresh(context); if(data.optBoolean("paused",true)||data.optJSONObject("enabled")?.optBoolean("files",false)!=true) files.close(); if (canSend("notifications")) PingoraNotificationListener.instance?.sync(this) }
+            "policy" -> { remotePolicy = data; if(LaptopWidget.hasWidgets(context)) requestLaptopStatus(); LaptopWidget.refresh(context); ClipboardWidget.refresh(context); ResumeWidget.checkIfPresent(context); if(data.optBoolean("paused",true)||data.optJSONObject("enabled")?.optBoolean("files",false)!=true) files.close(); if (canSend("notifications")) PingoraNotificationListener.instance?.sync(this) }
             "sync" -> { if (canSend("notifications")) PingoraNotificationListener.instance?.sync(this); battery() }
             "battery_request" -> battery()
             "battery" -> if(allows("battery")) {val level=data.optInt("level",-1);if(level in 0..100) laptopBattery="Laptop battery: $level%${if(data.optBoolean("charging")) " · charging" else ""}"}

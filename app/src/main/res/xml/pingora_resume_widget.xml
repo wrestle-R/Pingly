@@ -1,5 +1,5 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="114dp" android:minHeight="56dp" android:minResizeWidth="100dp"
+    android:minWidth="114dp" android:minHeight="96dp" android:minResizeWidth="100dp"
     android:targetCellWidth="2" android:targetCellHeight="1" android:resizeMode="horizontal"
     android:initialLayout="@layout/pingora_resume_widget" android:previewLayout="@layout/pingora_resume_widget"
     android:description="@string/pingora_resume_widget_description"
