@@ -1,4 +1,5 @@
 use crate::{
+    clipboard_image::{receipt, ClipboardImage},
     model::{Envelope, Feature, Notice, Policy, Session, Store},
     service,
 };
@@ -36,6 +37,7 @@ struct Live {
     remote_policies: BTreeMap<String, Policy>,
     battery: BTreeMap<String, Value>,
     clipboard: Option<String>,
+    clipboard_images: BTreeMap<String, ClipboardImage>,
     errors: u64,
     observing: bool,
     desktop: BTreeMap<String, (Notice, u32)>,
@@ -369,12 +371,14 @@ impl Runtime {
             self.native(crate::native::Command::ClearPeer(id.into()));
         }
         if policy.paused || !policy.allows(Feature::Clipboard) {
-            self.live.lock().map_err(|_| "Session busy")?.clipboard = None;
+            let mut live = self.live.lock().map_err(|_| "Session busy")?;
+            live.clipboard = None;
+            live.clipboard_images.remove(id);
         }
         self.send(
             id,
             "policy",
-            json!({"enabled":policy.enabled,"paused":policy.paused}),
+            json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true}),
         )
         .ok();
         Ok(())
@@ -579,6 +583,7 @@ impl Runtime {
             l.sessions.remove(id);
             l.remote_policies.remove(id);
             l.battery.remove(id);
+            l.clipboard_images.remove(id);
             l.clipboard = None;
         }
         if let Ok(mut s) = self.store.lock() {
@@ -605,6 +610,56 @@ impl Runtime {
             .take()
             .ok_or_else(|| "No received clipboard text".into())
     }
+    fn receive_clipboard_image(&self, id: &str, kind: &str, data: &Value) -> Option<Value> {
+        let receipt = receipt(data)?;
+        let fail = || Some(json!({"receipt":receipt,"result":"failed"}));
+        if !self.permitted(id, Feature::Clipboard) {
+            return fail();
+        }
+        let mut live = self.live.lock().ok()?;
+        if kind == "clipboard_image" {
+            if live.clipboard_images.len() >= 4
+                || live.clipboard_images.contains_key(id)
+                || !unlocked()
+            {
+                return fail();
+            }
+            let Some(image) = ClipboardImage::new(data) else {
+                return fail();
+            };
+            live.clipboard_images.insert(id.into(), image);
+            return Some(json!({"receipt":receipt,"result":"next","offset":0}));
+        }
+        let image = live.clipboard_images.get_mut(id)?;
+        if image.receipt != receipt {
+            return None;
+        }
+        match image.append(data) {
+            Ok(false) => data["ack"]
+                .as_bool()
+                .unwrap_or(false)
+                .then(|| json!({"receipt":receipt,"result":"next","offset":image.bytes.len()})),
+            Ok(true) => {
+                let image = live.clipboard_images.remove(id)?;
+                drop(live);
+                let copied = unlocked()
+                    && image.valid_header()
+                    && crate::system::clipboard_write_bytes(&image.bytes, Some(image.mime)).is_ok();
+                if copied {
+                    if let Ok(mut live) = self.live.lock() {
+                        live.clipboard = None;
+                    }
+                }
+                self.native(crate::native::Command::Clipboard(copied));
+                Some(json!({"receipt":receipt,"result":if copied {"copied"} else {"failed"}}))
+            }
+            Err(()) => {
+                live.clipboard_images.remove(id);
+                fail()
+            }
+        }
+    }
+
     fn receive(&self, id: &str, packet: Envelope) {
         if packet.kind == "hello" {
             let Some(remote) = packet.data["token"].as_str().filter(|s| s.len() == 48) else {
@@ -614,6 +669,7 @@ impl Runtime {
                 let Ok(mut live) = self.live.lock() else {
                     return;
                 };
+                live.clipboard_images.remove(id);
                 let Some(session) = live.sessions.get_mut(id) else {
                     return;
                 };
@@ -661,7 +717,7 @@ impl Runtime {
                 self.send(
                     id,
                     "policy",
-                    json!({"enabled":policy.enabled,"paused":policy.paused}),
+                    json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true}),
                 )
                 .ok();
                 self.send(id, "sync", json!({})).ok();
@@ -700,6 +756,7 @@ impl Runtime {
                     if policy.paused || !policy.allows(Feature::Clipboard) {
                         if let Ok(mut l) = self.live.lock() {
                             l.clipboard = None;
+                            l.clipboard_images.remove(id);
                         }
                     }
                     if let Ok(mut l) = self.live.lock() {
@@ -765,14 +822,37 @@ impl Runtime {
                     }
                 }
             }
-            "clipboard" if self.permitted(id, Feature::Clipboard) && unlocked() => {
-                if let Some(text) = packet.data["text"].as_str().filter(|s| s.len() <= 16384) {
-                    if let Ok(mut l) = self.live.lock() {
-                        l.clipboard = Some(text.into());
+            "clipboard" => {
+                let copied = if self.permitted(id, Feature::Clipboard) && unlocked() {
+                    if let Some(text) = packet.data["text"]
+                        .as_str()
+                        .filter(|s| !s.is_empty() && s.len() <= 16384)
+                    {
+                        if let Ok(mut l) = self.live.lock() {
+                            l.clipboard = Some(text.into());
+                        }
                         let copied = crate::system::clipboard_write(text).is_ok();
-                        drop(l);
                         self.native(crate::native::Command::Clipboard(copied));
+                        copied
+                    } else {
+                        false
                     }
+                } else {
+                    false
+                };
+                if let Some(receipt) = receipt(&packet.data) {
+                    self.send(
+                        id,
+                        "clipboard_receipt",
+                        json!({"receipt":receipt,"result":if copied {"copied"} else {"failed"}}),
+                    )
+                    .ok();
+                }
+            }
+            "clipboard_image" | "clipboard_image_chunk" => {
+                if let Some(response) = self.receive_clipboard_image(id, &packet.kind, &packet.data)
+                {
+                    self.send(id, "clipboard_receipt", response).ok();
                 }
             }
             "file_offer" if self.permitted(id, Feature::Files) => {
@@ -961,6 +1041,8 @@ impl Runtime {
                     l.sessions.retain(|id, _| reachable.contains(id));
                     l.remote_policies.retain(|id, _| reachable.contains(id));
                     l.battery.retain(|id, _| reachable.contains(id));
+                    l.clipboard_images
+                        .retain(|id, image| reachable.contains(id) && !image.expired());
                     if reachable.is_empty() {
                         l.clipboard = None;
                     }
@@ -1070,6 +1152,7 @@ impl Runtime {
             } else {
                 if let Ok(mut l) = self.live.lock() {
                     l.sessions.clear();
+                    l.clipboard_images.clear();
                     l.remote_policies.clear();
                     l.clipboard = None;
                     l.battery.clear();

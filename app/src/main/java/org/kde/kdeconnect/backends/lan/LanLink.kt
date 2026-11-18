@@ -24,6 +24,7 @@ import org.kde.kdeconnect.extensions.closeSafe
 import org.kde.kdeconnect.helpers.LineTooLongException
 import org.kde.kdeconnect.helpers.ThreadHelper
 import org.kde.kdeconnect.helpers.readLineBounded
+import org.kde.kdeconnect.helpers.isCGNAT
 import org.kde.kdeconnect.helpers.security.SslHelper.convertToSslSocket
 import java.io.BufferedInputStream
 import java.io.IOException
@@ -45,6 +46,12 @@ class LanLink(
 ) : BaseLink(context, linkProvider) {
 
     override val name = "LanLink"
+
+    val usesPrivateVpn: Boolean
+        get() {
+            val current = socket
+            return current.localAddress.isCGNAT && current.inetAddress.isCGNAT
+        }
 
     override fun disconnect() {
         Log.i(TAG, "Disconnect socket: ${socket.hashCode()}")

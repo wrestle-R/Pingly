@@ -1,0 +1,19 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:gravity="center_vertical" android:paddingHorizontal="14dp" android:paddingVertical="8dp"
+    android:background="@drawable/pingora_widget_surface">
+    <LinearLayout android:id="@id/clipboard_widget_header" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="match_parent" android:gravity="center_vertical">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:text="Clipboard" android:textColor="@color/widget_foreground" android:textStyle="bold"
+            android:textSize="14sp" android:singleLine="true" android:ellipsize="end" />
+        <ImageButton android:id="@id/clipboard_widget_choose" android:layout_width="30dp" android:layout_height="44dp"
+            android:src="@drawable/ic_widget_devices" android:tint="@color/widget_foreground"
+            android:background="@android:color/transparent" android:visibility="gone" android:contentDescription="Choose clipboard destination" />
+    </LinearLayout>
+    <TextView android:id="@id/pingora_widget_send" android:layout_width="0dp" android:layout_weight="1.55"
+        android:layout_height="44dp" android:layout_marginStart="8dp" android:paddingHorizontal="4dp" android:gravity="center"
+        android:background="@drawable/pingora_widget_button" android:textColor="@color/widget_on_button"
+        android:text="Send clipboard" android:textSize="13sp" android:textStyle="bold"
+        android:singleLine="true" android:ellipsize="end" />
+</LinearLayout>

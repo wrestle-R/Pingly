@@ -33,8 +33,7 @@ class PingoraNotificationListener : NotificationListenerService() {
     }
     override fun onDestroy() { if (instance === this) instance = null; super.onDestroy() }
 
-    private fun isProbe(sbn: StatusBarNotification): Boolean = sbn.packageName == packageName && sbn.tag == PROBE_TAG && sbn.id == PROBE_ID
-    private fun allowed(sbn: StatusBarNotification): Boolean = (isProbe(sbn) || (sbn.packageName != packageName && sbn.packageName in SharingPolicy.apps(this))) && sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0
+    private fun allowed(sbn: StatusBarNotification): Boolean = sbn.packageName != packageName && sbn.packageName in SharingPolicy.apps(this) && sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0
 
     @Suppress("DEPRECATION")
     private fun record(sbn: StatusBarNotification): JSONObject? {
@@ -59,7 +58,7 @@ class PingoraNotificationListener : NotificationListenerService() {
             bigText=extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString(),
             messages=messages.map {MessageFields(if(Build.VERSION.SDK_INT>=28)it.senderPerson?.name?.toString().orEmpty() else it.sender?.toString().orEmpty(),it.text?.toString().orEmpty())},
             reply=reply,read=read
-        ),if(isProbe(sbn)) setOf(packageName) else SharingPolicy.apps(this),if(isProbe(sbn)) "" else packageName) ?: return null
+        ),SharingPolicy.apps(this),packageName) ?: return null
         return JSONObject().put("peer", "").put("source",item.source).put("version",item.version)
             .put("app",item.app).put("conversation",item.conversation).put("sender",item.sender).put("title",item.title).put("body",item.body)
             .put("received",0).put("active",true).put("reply",item.reply).put("read",item.read)
@@ -124,8 +123,6 @@ class PingoraNotificationListener : NotificationListenerService() {
         }catch(_:Exception){return "unavailable"}
     }
     companion object {
-        private const val PROBE_TAG = "pingora-forwarding-probe"
-        private const val PROBE_ID = 7151
         @Volatile private var lastRebind=0L
         @Synchronized fun ensureConnected(context: android.content.Context) {
             if(Build.VERSION.SDK_INT<24 || instance!=null) return
@@ -137,16 +134,5 @@ class PingoraNotificationListener : NotificationListenerService() {
             }
         }
         @Volatile var instance: PingoraNotificationListener? = null; private set
-        fun postProbe(context: android.content.Context) {
-            val manager = context.getSystemService(android.app.NotificationManager::class.java)
-            val channel = "pingora_forwarding_test"
-            if(Build.VERSION.SDK_INT >= 26) manager.createNotificationChannel(android.app.NotificationChannel(channel,"Forwarding test",android.app.NotificationManager.IMPORTANCE_DEFAULT))
-            val notification = androidx.core.app.NotificationCompat.Builder(context,channel)
-                .setSmallIcon(org.kde.kdeconnect_tp.R.drawable.pingora_icon)
-                .setContentTitle("Pingora delivery check")
-                .setContentText("Harmless test notification. No message or clipboard content.")
-                .setTimeoutAfter(120_000).build()
-            manager.notify(PROBE_TAG,PROBE_ID,notification)
-        }
     }
 }

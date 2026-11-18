@@ -1,0 +1,9 @@
+<resources>
+    <color name="widget_background">#FAFAFA</color>
+    <color name="widget_foreground">#171717</color>
+    <color name="widget_secondary">#575757</color>
+    <color name="widget_button">#202020</color>
+    <color name="widget_on_button">#FFFFFF</color>
+    <string name="pingora_clipboard_widget_description">Send copied text or images to your laptop.</string>
+    <string name="pingora_laptop_widget_description">See laptop battery, system usage, and connection.</string>
+</resources>

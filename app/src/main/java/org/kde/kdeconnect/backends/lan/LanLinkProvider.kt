@@ -70,7 +70,7 @@ class LanLinkProvider(private val context: Context) : BaseLinkProvider() {
 
     private val customDeviceListener = OnSharedPreferenceChangeListener { _, key ->
         if (key == CustomDevicesActivity.KEY_CUSTOM_DEVICE_LIST_PREFERENCE) {
-            updateCustomDevicesList()
+            broadcastUdpIdentityPacket(null)
         }
     }
 
@@ -517,9 +517,13 @@ class LanLinkProvider(private val context: Context) : BaseLinkProvider() {
                 Log.i("LanLinkProvider", "Current network isn't trusted, not broadcasting")
             }
             updateCustomDevicesList()
-            ipList.addAll(customDeviceAddresses)
             if (ipList.isNotEmpty()) {
                 sendUdpIdentityPacket(ipList, network)
+            }
+            // Explicit addresses follow Android's default routes, including an active VPN.
+            val customAddresses = customDeviceAddresses
+            if (customAddresses.isNotEmpty()) {
+                sendUdpIdentityPacket(customAddresses, null)
             }
         }
     }

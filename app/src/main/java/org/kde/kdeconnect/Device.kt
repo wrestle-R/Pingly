@@ -69,6 +69,8 @@ class Device : PacketReceiver {
     var pairingHandler: PairingHandler
 
     private val links = CopyOnWriteArrayList<BaseLink>()
+    val usesPrivateVpn: Boolean
+        get() = (links.firstOrNull() as? org.kde.kdeconnect.backends.lan.LanLink)?.usesPrivateVpn == true
 
     private val _isReachableFlow = MutableStateFlow(false)
 

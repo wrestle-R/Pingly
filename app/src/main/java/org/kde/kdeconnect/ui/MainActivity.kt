@@ -101,6 +101,7 @@ class MainActivity : AppCompatActivity(), OnSharedPreferenceChangeListener {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         DeviceHelper.initializeDeviceId(this)
+        org.kde.kdeconnect.pingora.WidgetPreviews.register(this)
 
         val root = binding.root
         setContentView(root)
@@ -222,7 +223,9 @@ class MainActivity : AppCompatActivity(), OnSharedPreferenceChangeListener {
         if(intent.getBooleanExtra("pingora_inbox",false)) {mCurrentMenuEntry=MENU_ENTRY_INBOX;setContentFragment(WorkspaceFragment().apply {arguments=Bundle().apply {putInt("destination",2)}});return}
         if(intent.getBooleanExtra("pingora_sharing",false)) {
             mCurrentMenuEntry=MENU_ENTRY_SHARING
-            setContentFragment(WorkspaceFragment())
+            setContentFragment(WorkspaceFragment().apply {
+                arguments = Bundle().apply { putString("peer", intent.getStringExtra("pingora_peer")) }
+            })
             return
         }
 

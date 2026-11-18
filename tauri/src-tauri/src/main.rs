@@ -5,6 +5,7 @@ use std::process::Command;
 use std::sync::Arc;
 use tauri::{Manager, State};
 mod calls;
+mod clipboard_image;
 mod model;
 mod native;
 mod observe;

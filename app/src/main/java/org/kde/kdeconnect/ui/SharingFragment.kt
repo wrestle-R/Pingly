@@ -1,8 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package org.kde.kdeconnect.ui
 
-import android.app.KeyguardManager
-import android.content.ClipboardManager
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -21,6 +19,7 @@ import org.json.JSONObject
 import org.kde.kdeconnect.KdeConnect
 import org.kde.kdeconnect.pingora.BridgePlugin
 import org.kde.kdeconnect.pingora.SharingPolicy
+import org.kde.kdeconnect.pingora.connectionLabel
 
 class SharingFragment : Fragment() {
     private var selectedPeer: String? = null
@@ -49,7 +48,7 @@ class SharingFragment : Fragment() {
                 peer?.isReachable!=true -> "Offline · Showing saved readings"
                 SharingPolicy.preferences(requireContext()).getBoolean("${peer.deviceId}.paused",false) -> "Sharing paused · Resume in Settings."
                 bridge?.isReady != true -> "Connecting to laptop…"
-                else -> "Connected"
+                else -> peer.connectionLabel
             }
             val liveState=liveState()
             if(page!=3 && lastLiveState!=liveState) render()
@@ -173,7 +172,7 @@ class SharingFragment : Fragment() {
             !current.isReachable -> "Offline · Showing saved readings"
             SharingPolicy.preferences(context).getBoolean("${current.deviceId}.paused",false) -> "Sharing paused · Resume in Settings."
             current.getPlugin<BridgePlugin>()?.isReady != true -> "Connecting to laptop…"
-            else -> "Connected"
+            else -> current.connectionLabel
         })
             layout.removeView(connectionLabel)
             cardContent.addView(connectionLabel)
@@ -199,13 +198,13 @@ class SharingFragment : Fragment() {
         }
         text("Home screen widgets",true)
         if(android.os.Build.VERSION.SDK_INT>=26) {
-            button("Add laptop status widget") { android.appwidget.AppWidgetManager.getInstance(context).requestPinAppWidget(android.content.ComponentName(context,org.kde.kdeconnect.pingora.LaptopWidget::class.java),null,null) }
-            button("Add clipboard widget") { android.appwidget.AppWidgetManager.getInstance(context).requestPinAppWidget(android.content.ComponentName(context,org.kde.kdeconnect.pingora.ClipboardWidget::class.java),null,null) }
+            button("Add laptop status widget") { org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, laptop = true) }
+            button("Add clipboard widget") { org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, laptop = false) }
         }
+        button("Private network addresses") { startActivity(Intent(context, CustomDevicesActivity::class.java)) }
         button("Connection & Android permissions") {(activity as? MainActivity)?.openPingoraPage("health")}
         text("Permissions & folders", true)
         text("Sharing features start enabled. Android still needs your approval for notification access and folders.")
-        button("Test notification forwarding") { android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({org.kde.kdeconnect.pingora.PingoraNotificationListener.postProbe(context.applicationContext)},5000);message("Test in 5 seconds. You can return to the home screen.") }
         button("Notification access settings") { startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)) }
         val apps=linkedMapOf("com.whatsapp" to "WhatsApp", "com.whatsapp.w4b" to "WhatsApp Business", "com.instagram.android" to "Instagram", "com.google.android.gm" to "Gmail")
         Telephony.Sms.getDefaultSmsPackage(context)?.let { apps[it]="Default SMS app notifications" }
@@ -251,14 +250,7 @@ class SharingFragment : Fragment() {
             if(bridge?.canSend("files")!=true || bridge.canSend("clipboard")!=true)
                 text("Some actions are unavailable. Check the connection and feature switches in Settings on both devices.")
             button("Send clipboard", bridge?.canSend("clipboard")==true) {
-                val bridge=device.getPlugin<BridgePlugin>()
-                if(bridge?.canSend("clipboard") != true) {message("Enable clipboard on both devices and wait for a connection."); return@button}
-                if(context.getSystemService(KeyguardManager::class.java).isDeviceLocked) {message("Unlock your phone to send clipboard text.");return@button}
-                val clip=context.getSystemService(ClipboardManager::class.java).primaryClip
-                val value=clip?.takeIf {it.itemCount>0}?.getItemAt(0)?.text?.toString()
-                if(value==null) message("The clipboard has no text.")
-                else if(value.toByteArray(Charsets.UTF_8).size>16384) message("Clipboard text is too large (16 KiB maximum).")
-                else message(if(bridge.send("clipboard",JSONObject().put("text",value))) "Clipboard queued for this connection." else "Could not queue clipboard. Reconnect and try again.")
+                startActivity(Intent(context, org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java).putExtra("peer", device.deviceId))
             }
             button("Send file", bridge?.canSend("files")==true) { selectedPeer=device.deviceId;filePicker.launch(arrayOf("*/*")) }
             }
@@ -340,7 +332,7 @@ class SharingFragment : Fragment() {
         val inner=LinearLayout(context).apply {orientation=LinearLayout.VERTICAL;setPadding(20.dp(),16.dp(),20.dp(),16.dp())}
         root.addView(card);card.addView(inner)
         label(inner,peer?.name ?: "Connect your laptop",20f,true)
-        connectionLabel=label(inner,if(peer?.isReachable==true && bridge?.isReady==true) "Connected" else "Offline · Last saved status",13f)
+        connectionLabel=label(inner,if(peer?.isReachable==true && bridge?.isReady==true) peer.connectionLabel else "Offline · Last saved status",13f)
         val level=saved.data.optJSONObject("battery")?.optInt("level",-1) ?: -1
         batteryLabel=label(inner,if(level in 0..100) "$level%" else "—",42f,true).apply {
             setTextColor(com.google.android.material.color.MaterialColors.getColor(this,androidx.appcompat.R.attr.colorPrimary))
@@ -363,7 +355,7 @@ class SharingFragment : Fragment() {
             label(root,"Send to ${peer.name}",17f,true)
             val sendActions=LinearLayout(context).apply {orientation=LinearLayout.HORIZONTAL;root.addView(this)}
             action(sendActions,"Send clipboard",bridge?.canSend("clipboard")==true && peer.isReachable,true) {
-                startActivity(Intent(context,org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java))
+                startActivity(Intent(context,org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java).putExtra("peer", peer.deviceId))
             }
             action(sendActions,"Send file",bridge?.canSend("files")==true && peer.isReachable,true) {filePicker.launch(arrayOf("*/*"))}
             for(index in 0 until sendActions.childCount) sendActions.getChildAt(index).layoutParams=LinearLayout.LayoutParams(0,60.dp(),1f).apply {setMargins(if(index==0)0 else 4.dp(),0,if(index==0)4.dp() else 0,0)}

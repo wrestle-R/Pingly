@@ -2,62 +2,112 @@
 package org.kde.kdeconnect.pingora
 
 import android.app.KeyguardManager
+import android.appwidget.AppWidgetManager
 import android.content.ClipboardManager
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import org.json.JSONObject
+import androidx.appcompat.app.AppCompatActivity
+import org.kde.kdeconnect.Device
 import org.kde.kdeconnect.KdeConnect
 
-/** A focused, user-invoked send surface: Android does not grant widgets clipboard focus. */
+/** A transparent focused activity lets Android authorize the widget's clipboard read. */
 class ClipboardSendActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
+    private val widgetId get() = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
     private var started = false
+    private var chosen: Device? = null
     private var attempts = 0
-    private fun done(message: String) { Toast.makeText(this, message, Toast.LENGTH_LONG).show(); finish() }
-    override fun onCreate(state: Bundle?) {
-        super.onCreate(state)
-        val row=android.widget.LinearLayout(this).apply {
-            orientation=android.widget.LinearLayout.HORIZONTAL;gravity=android.view.Gravity.CENTER_VERTICAL
-            val padding=(16*resources.displayMetrics.density).toInt();setPadding(padding,padding,padding,padding)
-            addView(android.widget.ProgressBar(this@ClipboardSendActivity),android.widget.LinearLayout.LayoutParams(padding*2,padding*2))
-            addView(android.widget.TextView(this@ClipboardSendActivity).apply {text="Sending clipboard…";setPadding(padding,0,0,0)})
-        }
-        setContentView(row)
-        window.setDimAmount(0f)
-        title = "Sending clipboard"
-    }
-    override fun onResume() {
-        super.onResume()
-        org.kde.kdeconnect.BackgroundService.ForceRefreshConnections(this)
-    }
+
     override fun onWindowFocusChanged(focus: Boolean) {
         super.onWindowFocusChanged(focus)
-        if(focus && !started) { started=true; handler.post(::send) }
-    }
-    private fun send() {
-        if(isFinishing) return
-        if(!hasWindowFocus()) {done("Clipboard send cancelled. Tap the widget again.");return}
-        if(getSystemService(KeyguardManager::class.java).isDeviceLocked) {done("Unlock your phone to send clipboard text.");return}
-        val peers=KdeConnect.getInstance().devices.values.filter {it.isPaired && it.isReachable && it.getPlugin<BridgePlugin>()?.canSend("clipboard")==true}
-        if(peers.isEmpty() && attempts++<75) {handler.postDelayed(::send,200);return}
-        if(peers.isEmpty()) {done("No laptop ready. Check your connection and clipboard sharing.");return}
-        val clip=getSystemService(ClipboardManager::class.java).primaryClip
-        val text=clip?.takeIf {it.itemCount>0}?.getItemAt(0)?.text?.toString()
-        if(text.isNullOrEmpty()) {done("The clipboard has no readable text.");return}
-        if(text.toByteArray(Charsets.UTF_8).size>16384) {done("Clipboard text is too large (16 KiB maximum).");return}
-        fun transmit(index: Int) {
-            val peer=peers[index]
-            val bridge=peer.getPlugin<BridgePlugin>()
-            val sent=bridge?.canSend("clipboard")==true && bridge.send("clipboard",JSONObject().put("text",text))
-            done(if(sent) "Clipboard queued for ${peer.name}." else "Connection changed. Try sending again.")
+        if (focus && !started) {
+            started = true
+            prepare()
+        } else if (focus && chosen != null) {
+            handler.post(::send)
         }
-        if(peers.size==1) transmit(0)
-        else MaterialAlertDialogBuilder(this).setTitle("Send clipboard to")
-            .setItems(peers.map {it.name}.toTypedArray()) {_,i->transmit(i)}.setOnCancelListener {finish()}.show()
     }
-    override fun onDestroy() {handler.removeCallbacksAndMessages(null);super.onDestroy()}
+
+    private fun prepare() {
+        val peers = KdeConnect.getInstance().devices.values.filter { it.isPaired }
+            .sortedWith(compareBy({ it.name.lowercase() }, { it.deviceId }))
+        val laptop = intent.action?.endsWith(".laptop-target") == true
+        val choose = laptop || intent.action?.endsWith(".clipboard-target") == true
+        val key = if (laptop) "peer.$widgetId" else "clipboard.$widgetId"
+        val hint = intent.getStringExtra("peer") ?: widgetPreferences(this).getString(key, null)
+        val target = if (hint == null) peers.singleOrNull() else peers.firstOrNull { it.deviceId == hint }
+        if (peers.isEmpty()) {
+            done("Pair a laptop")
+        } else if (choose || target == null) {
+            MaterialAlertDialogBuilder(this).setTitle("Choose a laptop")
+                .setItems(peers.map { peer ->
+                    val name = if (peers.count { it.name == peer.name } > 1) "${peer.name} (${peer.deviceId.takeLast(6)})" else peer.name
+                    "$name · ${peer.connectionLabel}"
+                }.toTypedArray()) { _, index ->
+                    val peer = peers[index]
+                    if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                        widgetPreferences(this).edit().putString(key, peer.deviceId).apply()
+                        ClipboardWidget.refresh(this)
+                        LaptopWidget.refresh(this)
+                    }
+                    if (choose) finish() else {
+                        chosen = peer
+                        handler.post(::send)
+                    }
+                }.setOnCancelListener { finish() }.show()
+        } else {
+            chosen = target
+            handler.post(::send)
+        }
+    }
+
+    private fun send() {
+        val peer = chosen ?: return
+        if (isFinishing || !hasWindowFocus()) return
+        handler.removeCallbacksAndMessages(null)
+        if (getSystemService(KeyguardManager::class.java).isDeviceLocked) {
+            done("Unlock to send")
+            return
+        }
+        val bridge = peer.getPlugin<BridgePlugin>()
+        if (bridge?.isReady != true) {
+            if (attempts++ == 0) {
+                ClipboardWidget.label(applicationContext, widgetId, "Connecting…")
+                org.kde.kdeconnect.BackgroundService.ForceRefreshConnections(this)
+            }
+            if (attempts < 26) handler.postDelayed(::send, 200) else done("Laptop offline")
+            return
+        }
+        if (!bridge.canSend("clipboard")) {
+            done("Clipboard disabled")
+            return
+        }
+        val clip = getSystemService(ClipboardManager::class.java).primaryClip
+        if (clip == null || clip.itemCount == 0) {
+            done("Clipboard empty")
+            return
+        }
+        val item = clip.getItemAt(0)
+        val isImage = clip.description.hasMimeType("image/*")
+        if (bridge.clipboard.busy) {
+            finish()
+            return
+        }
+        val context = applicationContext
+        val id = widgetId
+        ClipboardWidget.label(context, id, "Sending…")
+        bridge.clipboard.send(item, isImage) { ClipboardWidget.label(context, id, it, reset = true) }
+        finish()
+    }
+
+    private fun done(message: String) {
+        ClipboardWidget.label(applicationContext, widgetId, message, reset = true)
+        finish()
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        super.onDestroy()
+    }
 }

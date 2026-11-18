@@ -36,6 +36,8 @@ class BridgePlugin : Plugin() {
         }
     )
 
+    internal val clipboard by lazy { ClipboardTransfer(context, this) }
+    val supportsClipboardReceipts get() = remotePolicy.optBoolean("clipboard_receipts")
     val files by lazy { FileTransfers(context,this) }
     @Volatile var laptopStatus: JSONObject = JSONObject(); private set
     @Volatile var laptopStatusAt: Long = 0; private set
@@ -79,6 +81,8 @@ class BridgePlugin : Plugin() {
         running.set(false); worker?.interrupt(); worker = null; queue.clear()
         synchronized(this) { local = ""; remote = ""; seen.clear(); remotePolicy = JSONObject() }
         files.close()
+        clipboard.disconnected()
+        ClipboardWidget.refresh(context)
         laptopStatusAt=0; LaptopWidget.refresh(context)
         handler.removeCallbacks(stopRing); handler.post(stopRing)
     }
@@ -147,6 +151,7 @@ class BridgePlugin : Plugin() {
             remote = token; policyChanged(); return true
         }
         when (kind) {
+            "clipboard_receipt" -> clipboard.receive(data)
             "notice_ack" -> PingoraNotificationListener.instance?.acknowledge(device.deviceId,data.optString("source"),data.optString("version"))
             "notice" -> if(allows("notifications"))LocalInbox.receive(context,device.deviceId,data)
             "notice_removed" -> if(allows("notifications"))LocalInbox.removed(context,device.deviceId,data.optString("source"),data.optString("version"))

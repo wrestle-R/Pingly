@@ -1,23 +1,26 @@
-# Android widgets (0.1.8)
+# Android widgets
 
-Add widgets from Home → Settings or your launcher's widget picker. Update both devices to a matching release.
+Add the widgets from Pingora Settings or your launcher's widget picker. Tap either widget's body to open Pingora. When you pair more than one laptop, use the devices icon to choose which laptop each widget uses.
 
 ## Clipboard
 
-Tap **Send clipboard** to send the current text to the connected laptop. Android requires a briefly focused send surface to read the clipboard; Pingora gives that surface a separate task so it returns to the launcher instead of bringing the main app forward. No clipboard history is saved. Unlock the phone before sending. If multiple laptops are connected, choose the destination.
+Unlock the phone and tap **Send clipboard**. The button shows **Sending…** and changes to **Sent clipboard** once the laptop writes the clipboard. Older desktop builds can queue text without a delivery receipt. Android requires a momentarily focused surface to read the clipboard, so the widget uses a transparent activity and returns to the launcher after reading.
+
+The Android sender accepts text up to 16 KiB, or PNG, JPEG, WebP, and GIF up to 4 MiB when the copying app exposes the image through Android's clipboard. Use matching Android and desktop builds for images. The image is transferred in memory through the paired connection. Paste it into a desktop app that accepts its format. Pingora keeps no clipboard history.
 
 ## Laptop status
 
-The widget pins to one paired laptop and shows its reported battery, charging, system CPU/RAM and internet connectivity, plus the absolute last-sync time and elapsed age. The last successful snapshot remains available after disconnection, app process death or phone restart. Missing data says not synced, rather than claiming a zero-second-old reading. Status older than 90 seconds is treated as cached when refreshed; the elapsed indicator continues in the launcher even if Android stops Pingora. Smaller widget sizes omit secondary rows to keep core readings and the sync time visible. Controls recheck freshness and permissions when tapped. Offline or unavailable values are not presented as current readings.
+The compact widget prioritizes the laptop name, battery and refresh button. Wider layouts show CPU and RAM. Taller layouts add internet status, the last-sync time, elapsed time, and the lid setting when available. Offline readings come from the most recent saved snapshot.
 
-- The widget shows only the current power-profile icon. In the app, open Power & lid controls to choose Battery saving, Efficiency or Powerful. These map to power-saver, balanced and performance; the displayed state comes from the laptop.
-- Change Sleep/Slumber lid preference in the app. The widget only reports it when space permits. This changes what closing the lid does; it does not suspend or activate Slumber immediately.
-- Tap refresh to request new status without opening the app.
+- Use refresh to request status without opening the app.
+- Open **Power & lid controls** in Pingora to change the profile or choose what happens when you close the lid.
 
-Power-profile controls require `powerprofilesctl` and a working local power-profiles service. Internet status uses NetworkManager's reported connectivity through `nmcli`; other network managers show unknown. Slumber lid controls require the narrow IPC adapter documented under the release tools and the owner's matching QuickShell setup. Unsupported controls remain unavailable.
+Power profiles require `powerprofilesctl` and a working power-profiles service. Internet status comes from NetworkManager. Slumber lid controls use the narrow IPC adapter documented under the release tools.
 
-For notification delivery checks, Settings offers a harmless test notification, posted after five seconds so the app can be backgrounded. Connection health shows whether the listener is connected and provides a reconnect action. If your phone interrupts the connection, review Pingora's background battery setting; unrestricted mode allows background work and may use more battery. Android notification access and per-device sharing permissions are still required.
+## Different networks
+
+Connect the phone and laptop to the same Tailscale network. Keep Pingora running on the laptop, then add the laptop's Tailscale IPv4 address in **Settings → Private network addresses** on the phone. Pair in Pingora if the devices are new. The VPN shield identifies a connection between Tailscale-range addresses. See [Tailscale's device connection guide](https://tailscale.com/docs/how-to/connect-to-devices).
 
 ## Desktop background connection
 
-The Linux installer creates a user-owned `pingora.service` when a user systemd manager is available. It starts at login and restarts after failure. Closing the desktop window hides it while sharing continues; opening Pingora again shows the existing instance. Use Settings → Quit Pingora or `systemctl --user stop pingora.service` to disconnect intentionally. To restart after a manual update, use `systemctl --user restart pingora.service`. On other setups, keep Pingora running in the desktop session.
+The Linux installer creates a user-owned `pingora.service` when a user systemd manager is available. It starts at login and restarts after failure. Closing the desktop window hides it while sharing continues. Use Settings → Quit Pingora or `systemctl --user stop pingora.service` to disconnect intentionally. On other setups, keep Pingora running in the desktop session.

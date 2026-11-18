@@ -1,0 +1,7 @@
+<resources>
+    <color name="widget_background">#191919</color>
+    <color name="widget_foreground">#FAFAFA</color>
+    <color name="widget_secondary">#B8B8B8</color>
+    <color name="widget_button">#EEEEEE</color>
+    <color name="widget_on_button">#161616</color>
+</resources>

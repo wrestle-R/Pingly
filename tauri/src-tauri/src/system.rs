@@ -27,6 +27,9 @@ pub fn clipboard_write(text: &str) -> Result<(), String> {
     if text.len() > 16384 {
         return Err("Clipboard text exceeds its limit".into());
     }
+    clipboard_write_bytes(text.as_bytes(), None)
+}
+pub fn clipboard_write_bytes(bytes: &[u8], mime: Option<&str>) -> Result<(), String> {
     let program = if std::env::var_os("WAYLAND_DISPLAY").is_some() {
         "/usr/bin/wl-copy"
     } else {
@@ -39,6 +42,11 @@ pub fn clipboard_write(text: &str) -> Result<(), String> {
     command.arg("3s").arg(program);
     if program.ends_with("xclip") {
         command.args(["-selection", "clipboard"]);
+        if let Some(mime) = mime {
+            command.args(["-target", mime]);
+        }
+    } else if let Some(mime) = mime {
+        command.args(["--type", mime]);
     }
     let mut child = command
         .stdin(Stdio::piped())
@@ -50,7 +58,7 @@ pub fn clipboard_write(text: &str) -> Result<(), String> {
         .stdin
         .take()
         .ok_or("Clipboard unavailable")?
-        .write_all(text.as_bytes())
+        .write_all(bytes)
         .map_err(|_| "Could not write clipboard")?;
     if !child
         .wait()
