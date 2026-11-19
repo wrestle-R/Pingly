@@ -43,11 +43,13 @@ class ClipboardWidget : AppWidgetProvider() {
         val peers = KdeConnect.getInstance().devices.values
         val peer = clipboardLaptop(context, peers)
         val laptopsAvailable = peers.any { it.canBeClipboardLaptop }
+        val buttonHeight = maxOf(48, 2 * context.widgetLineHeight(14f) + 8)
+        val expandedHeight = 36 + buttonHeight + context.widgetLineHeight(15f) + context.widgetLineHeight(12f)
         for (id in ids) {
             val label = synchronized(labels) { labels[id] }
             val views = widgetViews(context, manager, id) { size ->
                 val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
-                val compact = size.height < 104 + 28 * fontScale
+                val compact = size.height < expandedHeight
                 val layout = if (compact) R.layout.pingora_clipboard_widget_compact else R.layout.pingora_clipboard_widget
                 val view = RemoteViews(context.packageName, layout)
                 if (!compact) {
@@ -68,7 +70,10 @@ class ClipboardWidget : AppWidgetProvider() {
                     view.setViewVisibility(R.id.clipboard_widget_title, if (showTitle) View.VISIBLE else View.GONE)
                     view.setViewVisibility(R.id.clipboard_widget_icon, if (showTitle) View.GONE else View.VISIBLE)
                 }
-                view.setTextViewText(R.id.pingora_widget_send, label ?: if (peer == null && laptopsAvailable) "Choose laptop" else "Send clipboard")
+                val action = if (peer == null && laptopsAvailable) "Choose laptop" else "Send clipboard"
+                val shortSend = compact && size.width < 125 * fontScale && action == "Send clipboard"
+                view.setTextViewText(R.id.pingora_widget_send, label ?: if (shortSend) "Send" else action)
+                view.setContentDescription(R.id.pingora_widget_send, label ?: action)
                 view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id))
                 view.setOnClickPendingIntent(R.id.clipboard_widget_header, widgetOpenApp(context, id))
                 view.setOnClickPendingIntent(R.id.pingora_widget_send, widgetActivity(context, id, "clipboard-send"))

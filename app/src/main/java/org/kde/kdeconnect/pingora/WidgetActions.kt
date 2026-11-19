@@ -6,16 +6,26 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Paint
 import android.os.Build
 import android.util.SizeF
+import android.util.TypedValue
 import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
 import org.kde.kdeconnect.Device
 import org.kde.kdeconnect.ui.MainActivity
 import org.kde.kdeconnect_tp.R
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 internal data class WidgetSize(val width: Int, val height: Int)
+
+internal fun Context.widgetLineHeight(sp: Float): Int {
+    val metrics = resources.displayMetrics
+    val paint = Paint().apply { textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp, metrics) }
+    val font = paint.fontMetrics
+    return ceil((font.descent - font.ascent) / metrics.density).toInt()
+}
 
 internal fun widgetViews(
     context: Context,

@@ -118,8 +118,12 @@ class LaptopWidget : AppWidgetProvider() {
         view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id, null))
         view.setOnClickPendingIntent(R.id.laptop_widget_refresh, refreshIntent(context, id))
         val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
-        val showDetails = size.height >= 50 + 80 * fontScale
-        val maxRows = if (showDetails) ((size.height - 50) / (40 * fontScale)).toInt().coerceIn(2, 4) else 2
+        val rowSpace = size.height - 64
+        val nameHeight = context.widgetLineHeight(14f)
+        val detailedRowHeight = nameHeight + context.widgetLineHeight(11f) + 8
+        val showDetails = rowSpace >= detailedRowHeight * minOf(2, peers.size)
+        val rowHeight = if (showDetails) detailedRowHeight else maxOf(26, nameHeight + 4)
+        val maxRows = (rowSpace / rowHeight).coerceIn(1, 4)
         view.removeAllViews(R.id.devices_widget_rows)
         for (peer in peers.take(maxRows)) {
             val saved = LaptopTelemetry.read(context, peer.deviceId)
@@ -136,6 +140,8 @@ class LaptopWidget : AppWidgetProvider() {
             }
             val row = deviceWidgetRow(context, peer.name, status, battery, usage)
             if (!showDetails) {
+                val inset = (2 * context.resources.displayMetrics.density).toInt()
+                row.setViewPadding(R.id.devices_widget_row, 0, inset, 0, inset)
                 row.setViewVisibility(R.id.devices_widget_status, View.GONE)
                 row.setContentDescription(R.id.devices_widget_name, "${peer.name}, $connection")
             }

@@ -244,10 +244,10 @@ class ResumeWidget : AppWidgetProvider() {
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
+        val expandedHeight = 124 + 2 * context.widgetLineHeight(12f)
         for (id in ids) {
             val views = widgetViews(context, manager, id) { size ->
-                val compact = size.height < 90 + 20 * fontScale
+                val compact = size.height < expandedHeight
                 val layout = if (compact) R.layout.pingora_resume_widget_compact else R.layout.pingora_resume_widget
                 RemoteViews(context.packageName, layout).apply {
                     val idle = !connecting && request == null && startup == null
