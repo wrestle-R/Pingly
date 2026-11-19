@@ -12,6 +12,8 @@ import android.widget.RemoteViews
 import androidx.core.os.BundleCompat
 import org.kde.kdeconnect.Device
 import org.kde.kdeconnect.ui.MainActivity
+import org.kde.kdeconnect_tp.R
+import kotlin.math.roundToInt
 
 internal data class WidgetSize(val width: Int, val height: Int)
 
@@ -21,15 +23,19 @@ internal fun widgetViews(
     id: Int,
     render: (WidgetSize) -> RemoteViews,
 ): RemoteViews {
+    val alpha = (WidgetAppearance.opacity(context, id) * 255 / 100f).roundToInt()
+    fun renderWithOpacity(size: WidgetSize) = render(size).apply {
+        setInt(R.id.widget_surface, "setImageAlpha", alpha)
+    }
     val options = manager.getAppWidgetOptions(id)
     if (Build.VERSION.SDK_INT >= 31) {
         val sizes = BundleCompat.getParcelableArrayList(options, AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java)
         if (!sizes.isNullOrEmpty() && sizes.size <= 16) {
-            return RemoteViews(sizes.associateWith { render(WidgetSize(it.width.toInt(), it.height.toInt())) })
+            return RemoteViews(sizes.associateWith { renderWithOpacity(WidgetSize(it.width.toInt(), it.height.toInt())) })
         }
     }
     val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    return render(WidgetSize(
+    return renderWithOpacity(WidgetSize(
         options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH else AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 190),
         options.getInt(if (landscape) AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT else AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 142)
     ))
@@ -55,7 +61,7 @@ internal fun widgetOpenApp(
     context: Context,
     id: Int,
     peer: String? = widgetPreferences(context).let {
-        it.getString("peer.$id", null) ?: it.getString("clipboard.$id", null)
+        it.getString("peer.$id", null)
     },
 ): PendingIntent = PendingIntent.getActivity(context, id, Intent(context, MainActivity::class.java)
     .setData(android.net.Uri.Builder().scheme("pingora-widget").authority("open")

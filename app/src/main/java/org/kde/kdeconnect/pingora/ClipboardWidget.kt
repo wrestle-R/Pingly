@@ -40,33 +40,37 @@ class ClipboardWidget : AppWidgetProvider() {
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        val peers = KdeConnect.getInstance().devices.values.filter { it.isPaired }
+        val peers = KdeConnect.getInstance().devices.values
+        val peer = clipboardLaptop(context, peers)
+        val laptopsAvailable = peers.any { it.canBeClipboardLaptop }
         for (id in ids) {
-            val target = widgetPreferences(context).getString("clipboard.$id", null)
-            val peer = if (target == null) peers.singleOrNull() else peers.firstOrNull { it.deviceId == target }
             val label = synchronized(labels) { labels[id] }
             val views = widgetViews(context, manager, id) { size ->
                 val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
-                val compact = size.height < 132 * fontScale
-                val choosing = peers.size > 1 || peer == null && peers.isNotEmpty()
+                val compact = size.height < 104 + 28 * fontScale
                 val layout = if (compact) R.layout.pingora_clipboard_widget_compact else R.layout.pingora_clipboard_widget
                 val view = RemoteViews(context.packageName, layout)
                 if (!compact) {
                     view.setTextViewText(R.id.pingora_widget_status, peer?.let {
-                        "${it.name} · ${if (it.isReachable && it.getPlugin<BridgePlugin>()?.canSend("clipboard") != true) "Clipboard unavailable" else it.connectionLabel}"
-                    } ?: if (peers.isEmpty()) "Pair a laptop in Pingora" else "Choose a laptop")
+                        val bridge = it.getPlugin<BridgePlugin>()
+                        val status = when {
+                            !it.isReachable -> "Offline"
+                            bridge?.isReady != true -> "Connecting…"
+                            !bridge.canSend("clipboard") -> "Clipboard unavailable"
+                            else -> it.connectionLabel
+                        }
+                        "${it.name} · $status"
+                    } ?: if (laptopsAvailable) "Choose your clipboard laptop" else "Pair a laptop in Pingora")
                     view.setTextViewCompoundDrawables(R.id.pingora_widget_status, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
                 }
                 if (compact) {
-                    val showTitle = size.width >= (if (choosing) 256 else 200) * fontScale
+                    val showTitle = size.width >= 200 * fontScale
                     view.setViewVisibility(R.id.clipboard_widget_title, if (showTitle) View.VISIBLE else View.GONE)
-                    view.setViewVisibility(R.id.clipboard_widget_icon, if (!showTitle && !choosing) View.VISIBLE else View.GONE)
+                    view.setViewVisibility(R.id.clipboard_widget_icon, if (showTitle) View.GONE else View.VISIBLE)
                 }
-                view.setViewVisibility(R.id.clipboard_widget_choose, if (choosing) View.VISIBLE else View.GONE)
-                view.setTextViewText(R.id.pingora_widget_send, label ?: if (peer == null && peers.isNotEmpty()) "Choose laptop" else "Send clipboard")
+                view.setTextViewText(R.id.pingora_widget_send, label ?: if (peer == null && laptopsAvailable) "Choose laptop" else "Send clipboard")
                 view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id))
                 view.setOnClickPendingIntent(R.id.clipboard_widget_header, widgetOpenApp(context, id))
-                view.setOnClickPendingIntent(R.id.clipboard_widget_choose, widgetActivity(context, id, "clipboard-target"))
                 view.setOnClickPendingIntent(R.id.pingora_widget_send, widgetActivity(context, id, "clipboard-send"))
                 view
             }
@@ -75,6 +79,7 @@ class ClipboardWidget : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, ids: IntArray) {
+        WidgetAppearance.remove(context, ids)
         val editor = widgetPreferences(context).edit()
         ids.forEach { editor.remove("clipboard.$it") }
         editor.apply()

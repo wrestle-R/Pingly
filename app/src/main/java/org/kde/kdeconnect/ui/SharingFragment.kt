@@ -198,6 +198,11 @@ class SharingFragment : Fragment() {
                 }.show()
         }
         text("Home screen widgets",true)
+        button("Widget opacity") { org.kde.kdeconnect.pingora.WidgetAppearance.show(context) }
+        button("Clipboard laptop") {
+            startActivity(Intent(context, org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java)
+                .setAction(org.kde.kdeconnect.pingora.ClipboardSendActivity.CHOOSE_LAPTOP))
+        }
         if(android.os.Build.VERSION.SDK_INT>=26) {
             button("Add devices widget") { org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, laptop = true) }
             button("Add clipboard widget") { org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, laptop = false) }
@@ -258,8 +263,8 @@ class SharingFragment : Fragment() {
             text("Send something. Keep going on your laptop.")
             if(bridge?.canSend("files")!=true || bridge.canSend("clipboard")!=true)
                 text("Some actions are unavailable. Check the connection and feature switches in Settings on both devices.")
-            button("Send clipboard", bridge?.canSend("clipboard")==true) {
-                startActivity(Intent(context, org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java).putExtra("peer", device.deviceId))
+            button("Send clipboard") {
+                startActivity(Intent(context, org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java))
             }
             button("Send file", bridge?.canSend("files")==true) { selectedPeer=device.deviceId;filePicker.launch(arrayOf("*/*")) }
             }
@@ -361,10 +366,10 @@ class SharingFragment : Fragment() {
         action(root,"Refresh status",peer?.isReachable==true) {bridge?.requestLaptopStatus();message("Requesting a fresh laptop reading…")}
         if(peer==null) {action(root,"Pair a laptop",primary=true) {(activity as? MainActivity)?.openPingoraPage("devices")};return}
         if(!details) {
-            label(root,"Send to ${peer.name}",17f,true)
+            label(root,"Send from phone",17f,true)
             val sendActions=LinearLayout(context).apply {orientation=LinearLayout.HORIZONTAL;root.addView(this)}
-            action(sendActions,"Send clipboard",bridge?.canSend("clipboard")==true && peer.isReachable,true) {
-                startActivity(Intent(context,org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java).putExtra("peer", peer.deviceId))
+            action(sendActions,"Send clipboard",primary=true) {
+                startActivity(Intent(context,org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java))
             }
             action(sendActions,"Send file",bridge?.canSend("files")==true && peer.isReachable,true) {filePicker.launch(arrayOf("*/*"))}
             for(index in 0 until sendActions.childCount) sendActions.getChildAt(index).layoutParams=LinearLayout.LayoutParams(0,60.dp(),1f).apply {setMargins(if(index==0)0 else 4.dp(),0,if(index==0)4.dp() else 0,0)}

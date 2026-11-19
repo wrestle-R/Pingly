@@ -13,6 +13,7 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.kde.kdeconnect.BackgroundService
 import org.kde.kdeconnect.Device
 import org.kde.kdeconnect.KdeConnect
 import org.robolectric.RobolectricTestRunner
@@ -24,6 +25,46 @@ import java.util.concurrent.TimeUnit
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, application = Application::class, sdk = [23])
 class ResumeWidgetTest {
+    @Test
+    fun `a refresh tapped during reconnect checks the relay once it is ready`() {
+        val app = ApplicationProvider.getApplicationContext<Application>()
+        val sent = mutableListOf<String>()
+        var ready = false
+        val bridge = mockk<BridgePlugin> {
+            every { peerId } returns "relay"
+            every { canResumeInstabox } answers { ready }
+            every { canCheckInstabox } answers { ready }
+            every { send(any(), any()) } answers {
+                sent += firstArg<String>()
+                true
+            }
+        }
+        val peer = mockk<Device> {
+            every { isPaired } returns true
+            every { isReachable } returns true
+            every { getPlugin(BridgePlugin::class.java) } returns bridge
+        }
+        val application = mockk<KdeConnect> {
+            every { devices } returns ConcurrentHashMap(mapOf("relay" to peer))
+        }
+        val widget = ResumeWidget()
+        val looper = shadowOf(Looper.getMainLooper())
+        mockkObject(KdeConnect.Companion, BackgroundService.Companion)
+        try {
+            every { KdeConnect.getInstance() } returns application
+            every { BackgroundService.ForceRefreshConnections(any()) } returns Unit
+            widget.onReceive(app, Intent("io.github.wrestle_r.pingora.INSTABOX_STATUS"))
+            assertEquals(emptyList<String>(), sent)
+
+            ready = true
+            looper.idleFor(2, TimeUnit.SECONDS)
+            assertEquals(listOf("instabox_status"), sent)
+        } finally {
+            widget.onDisabled(app)
+            unmockkObject(KdeConnect.Companion, BackgroundService.Companion)
+        }
+    }
+
     @Test
     fun `accepted wake keeps checking through an unknown status and stops when online`() {
         val app = ApplicationProvider.getApplicationContext<Application>()

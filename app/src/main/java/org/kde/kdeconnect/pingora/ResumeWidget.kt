@@ -14,6 +14,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.widget.RemoteViews
 import org.json.JSONObject
+import org.kde.kdeconnect.BackgroundService
 import org.kde.kdeconnect.KdeConnect
 import org.kde.kdeconnect_tp.R
 import java.util.UUID
@@ -26,6 +27,8 @@ class ResumeWidget : AppWidgetProvider() {
         private const val STATUS_FRESH_MS = 30_000L
         private const val STARTUP_WINDOW_MS = 90_000L
         private const val PROBE_INTERVAL_MS = 8_000L
+        private const val RECONNECT_WINDOW_MS = 10_000L
+        private const val RECONNECT_INTERVAL_MS = 250L
         private val handler = Handler(Looper.getMainLooper())
         private var label = "Resume"
         private var compactLabel = label
@@ -33,6 +36,7 @@ class ResumeWidget : AppWidgetProvider() {
         private var checkedAt = -STATUS_FRESH_MS
         private var request: Request? = null
         private var startup: Startup? = null
+        private var connecting = false
 
         private data class Request(val receipt: String, val peer: String, val wake: Boolean)
         private data class Startup(val peer: String, val deadline: Long)
@@ -68,7 +72,7 @@ class ResumeWidget : AppWidgetProvider() {
             checkedAt = updated
             refresh(context)
             if (running) handler.postDelayed({
-                if (request == null && startup == null && checkedAt == updated) {
+                if (!connecting && request == null && startup == null && checkedAt == updated) {
                     label = "Resume"
                     compactLabel = label
                     status = "Last seen running"
@@ -113,8 +117,10 @@ class ResumeWidget : AppWidgetProvider() {
             }
         }
 
-        private fun start(context: Context, wake: Boolean) {
+        private fun start(context: Context, wake: Boolean, reconnectUntil: Long? = null) {
             val waiting = startup
+            if (connecting && reconnectUntil == null) return
+            connecting = false
             if (request != null || wake && (waiting != null || label == "Running")) return
             if (waiting != null && SystemClock.elapsedRealtime() >= waiting.deadline) {
                 waitForStartup(context, waiting)
@@ -130,8 +136,21 @@ class ResumeWidget : AppWidgetProvider() {
                 return
             }
             if (relay == null) {
-                org.kde.kdeconnect.BackgroundService.ForceRefreshConnections(context)
-                finish(context, "Wake relay offline", "Relay offline")
+                val now = SystemClock.elapsedRealtime()
+                val deadline = reconnectUntil ?: now + RECONNECT_WINDOW_MS
+                if (now >= deadline) {
+                    finish(context, "Wake relay offline", "Relay offline")
+                    return
+                }
+                connecting = true
+                if (reconnectUntil == null) {
+                    status = "Connecting to wake relay…"
+                    label = "Connecting…"
+                    compactLabel = label
+                    refresh(context)
+                    BackgroundService.ForceRefreshConnections(context)
+                }
+                handler.postDelayed({ start(context, wake, deadline) }, minOf(RECONNECT_INTERVAL_MS, deadline - now))
                 return
             }
             if (!wake && !relay.canCheckInstabox) {
@@ -162,10 +181,15 @@ class ResumeWidget : AppWidgetProvider() {
 
     override fun onEnabled(context: Context) { checkIfPresent(context) }
 
+    override fun onDeleted(context: Context, ids: IntArray) {
+        WidgetAppearance.remove(context, ids)
+    }
+
     override fun onDisabled(context: Context) {
         handler.removeCallbacksAndMessages(null)
         request = null
         startup = null
+        connecting = false
         checkedAt = -STATUS_FRESH_MS
         status = "Check status"
         label = "Resume"
@@ -180,15 +204,16 @@ class ResumeWidget : AppWidgetProvider() {
         val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
         for (id in ids) {
             val views = widgetViews(context, manager, id) { size ->
-                val compact = size.height < 110 * fontScale
+                val compact = size.height < 90 + 20 * fontScale
                 val layout = if (compact) R.layout.pingora_resume_widget_compact else R.layout.pingora_resume_widget
                 RemoteViews(context.packageName, layout).apply {
-                    val canWake = request == null && startup == null && label != "Running"
+                    val idle = !connecting && request == null && startup == null
+                    val canWake = idle && label != "Running"
                     setTextViewText(R.id.resume_widget_button, if (compact) compactLabel else label)
                     if (!compact) setTextViewText(R.id.resume_widget_status, status)
                     setContentDescription(R.id.resume_widget_button, if (canWake) "Resume InstaBox, $status" else status)
                     setOnClickPendingIntent(R.id.resume_widget_button, if (canWake) action(context, id, ACTION) else null)
-                    setOnClickPendingIntent(R.id.resume_widget_refresh, if (request == null && startup == null) action(context, id, REFRESH) else null)
+                    setOnClickPendingIntent(R.id.resume_widget_refresh, if (idle) action(context, id, REFRESH) else null)
                 }
             }
             manager.updateAppWidget(id, views)

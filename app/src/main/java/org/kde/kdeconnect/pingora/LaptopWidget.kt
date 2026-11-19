@@ -71,9 +71,9 @@ class LaptopWidget : AppWidgetProvider() {
             val slumber=status.optJSONObject("slumber")
             val views = widgetViews(context, manager, id) { size ->
                 val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
-                val showMetrics = size.width >= 216 * fontScale
-                val showSync = showMetrics && size.height >= 240 * fontScale && saved.receivedAt > 0
-                val showElapsed = size.height >= 260 * fontScale && showSync && System.currentTimeMillis() >= saved.receivedAt
+                val showMetrics = size.width >= 128 + 88 * fontScale
+                val showSync = size.height >= 182 + 58 * fontScale && saved.receivedAt > 0
+                val showElapsed = size.height >= 182 + 78 * fontScale && showSync && System.currentTimeMillis() >= saved.receivedAt
                 val view=RemoteViews(context.packageName,R.layout.pingora_laptop_widget)
                 if (size.height < 160) {
                     val density = context.resources.displayMetrics.density
@@ -89,7 +89,7 @@ class LaptopWidget : AppWidgetProvider() {
                 val (cpu, ram) = metricValues(status)
                 view.setTextViewText(R.id.laptop_widget_cpu, cpu)
                 view.setTextViewText(R.id.laptop_widget_ram, ram)
-                view.setTextViewText(R.id.laptop_widget_name,peer?.name ?: "Laptop status")
+                view.setTextViewText(R.id.laptop_widget_name, peer?.name ?: "Devices")
                 view.setTextViewText(R.id.laptop_widget_battery,if(level in 0..100) "$level%" else "—")
                 view.setTextViewText(R.id.laptop_widget_connection,when {peer==null->if(peers.isEmpty()) "Pair in Pingora" else "Choose a laptop";peer.isReachable!=true->"Offline · Saved reading";!fresh->"Updating · Saved reading";else->peer.connectionLabel})
                 view.setTextViewText(R.id.laptop_widget_internet,(if(battery?.optBoolean("charging")==true) "Charging · " else "")+when(status.optString("internet")) {"full"->"Internet online";"portal"->"Sign-in needed";"limited"->"Internet limited";"none"->"No internet";else->"Internet unknown"})
@@ -104,9 +104,9 @@ class LaptopWidget : AppWidgetProvider() {
                 view.setViewVisibility(R.id.laptop_widget_internet, if (size.height >= 152 * fontScale && saved.receivedAt > 0) View.VISIBLE else View.GONE)
                 view.setViewVisibility(R.id.laptop_widget_age, if (showSync) View.VISIBLE else View.GONE)
                 view.setViewVisibility(R.id.laptop_widget_elapsed, if (showElapsed) View.VISIBLE else View.GONE)
-                view.setViewVisibility(R.id.laptop_widget_lid, if (showSync && size.height >= 285 * fontScale && slumber?.optBoolean("available") == true) View.VISIBLE else View.GONE)
+                view.setViewVisibility(R.id.laptop_widget_lid, if (showSync && size.height >= 182 + 103 * fontScale && slumber?.optBoolean("available") == true) View.VISIBLE else View.GONE)
                 view.setViewVisibility(R.id.laptop_widget_connection, if (size.height >= 145 || !fresh || peer?.usesPrivateVpn == true) View.VISIBLE else View.GONE)
-                if (size.width < 216 * fontScale) view.setViewVisibility(R.id.laptop_widget_power, View.GONE)
+                if (!showMetrics) view.setViewVisibility(R.id.laptop_widget_power, View.GONE)
                 view.setTextViewCompoundDrawables(R.id.laptop_widget_connection, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
                 view
             }
@@ -162,6 +162,7 @@ class LaptopWidget : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, ids: IntArray) {
+        WidgetAppearance.remove(context, ids)
         val editor=context.getSharedPreferences("pingora_widgets",Context.MODE_PRIVATE).edit()
         ids.forEach {editor.remove("peer.$it")};editor.apply()
     }

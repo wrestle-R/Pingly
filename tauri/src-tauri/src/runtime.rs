@@ -379,13 +379,30 @@ impl Runtime {
             live.clipboard = None;
             live.clipboard_images.remove(id);
         }
+        self.send_policy(id);
+        Ok(())
+    }
+
+    fn send_policy(&self, id: &str) {
+        let policy = self
+            .store
+            .lock()
+            .ok()
+            .and_then(|s| s.policies.get(id).cloned())
+            .unwrap_or_default();
+        let resume = self.can_resume_from(id);
         self.send(
             id,
             "policy",
-            json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id),"instabox_status":self.can_resume_from(id) && self.resume_relay.as_ref().is_some_and(|relay| relay.status_available())}),
+            json!({
+                "enabled": policy.enabled,
+                "paused": policy.paused,
+                "clipboard_receipts": true,
+                "instabox_resume": resume,
+                "instabox_status": resume && self.resume_relay.as_ref().is_some_and(|relay| relay.status_available()),
+            }),
         )
         .ok();
-        Ok(())
     }
     pub fn snapshot(&self, query: &str) -> Result<Snapshot, String> {
         if query.len() > 1024 {
@@ -705,7 +722,9 @@ impl Runtime {
                 session: remote.into(),
                 data: json!({"token":token}),
             };
-            service::send(id, &serde_json::to_string(&response).unwrap_or_default()).ok();
+            if service::send(id, &serde_json::to_string(&response).unwrap_or_default()).is_ok() {
+                self.send_policy(id);
+            }
             return;
         }
         let accepted = self
@@ -724,18 +743,7 @@ impl Runtime {
                         s.remote = remote.into();
                     }
                 }
-                let policy = self
-                    .store
-                    .lock()
-                    .ok()
-                    .and_then(|s| s.policies.get(id).cloned())
-                    .unwrap_or_default();
-                self.send(
-                    id,
-                    "policy",
-                    json!({"enabled":policy.enabled,"paused":policy.paused,"clipboard_receipts":true,"instabox_resume":self.can_resume_from(id),"instabox_status":self.can_resume_from(id) && self.resume_relay.as_ref().is_some_and(|relay| relay.status_available())}),
-                )
-                .ok();
+                self.send_policy(id);
                 self.send(id, "sync", json!({})).ok();
             }
             return;

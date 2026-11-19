@@ -4,15 +4,31 @@ package org.kde.kdeconnect.pingora
 import android.app.KeyguardManager
 import android.appwidget.AppWidgetManager
 import android.content.ClipboardManager
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.appcompat.app.AppCompatActivity
 import org.kde.kdeconnect.Device
+import org.kde.kdeconnect.DeviceType
 import org.kde.kdeconnect.KdeConnect
+
+internal const val CLIPBOARD_LAPTOP_KEY = "clipboard_laptop"
+
+internal val Device.canBeClipboardLaptop: Boolean
+    get() = isPaired && (deviceType == DeviceType.LAPTOP || deviceType == DeviceType.DESKTOP)
+
+internal fun clipboardLaptop(context: Context, peers: Collection<Device>): Device? {
+    val id = widgetPreferences(context).getString(CLIPBOARD_LAPTOP_KEY, null) ?: return null
+    return peers.firstOrNull { it.deviceId == id && it.canBeClipboardLaptop }
+}
 
 /** A transparent focused activity lets Android authorize the widget's clipboard read. */
 class ClipboardSendActivity : AppCompatActivity() {
+    companion object {
+        internal const val CHOOSE_LAPTOP = "io.github.wrestle_r.pingora.clipboard-target"
+    }
+
     private val handler = Handler(Looper.getMainLooper())
     private val widgetId get() = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
     private var started = false
@@ -30,29 +46,25 @@ class ClipboardSendActivity : AppCompatActivity() {
     }
 
     private fun prepare() {
-        val peers = KdeConnect.getInstance().devices.values.filter { it.isPaired }
+        val peers = KdeConnect.getInstance().devices.values
+            .filter { it.canBeClipboardLaptop }
+            .withoutOfflineDuplicates()
             .sortedWith(compareBy({ it.name.lowercase() }, { it.deviceId }))
-        val choose = intent.action?.endsWith(".clipboard-target") == true
-        val key = "clipboard.$widgetId"
-        val hint = intent.getStringExtra("peer") ?: widgetPreferences(this).getString(key, null)
-        val target = if (hint == null) peers.singleOrNull() else peers.firstOrNull { it.deviceId == hint }
-        if (peers.isEmpty()) {
-            done("Pair a laptop")
-        } else if (choose || target == null) {
-            MaterialAlertDialogBuilder(this).setTitle("Choose a laptop")
+        val target = clipboardLaptop(this, KdeConnect.getInstance().devices.values)
+        if (intent.action == CHOOSE_LAPTOP || target == null) {
+            if (peers.isEmpty()) {
+                done("Pair a laptop")
+                return
+            }
+            MaterialAlertDialogBuilder(this).setTitle("Choose your clipboard laptop")
                 .setItems(peers.map { peer ->
                     val name = if (peers.count { it.name == peer.name } > 1) "${peer.name} (${peer.deviceId.takeLast(6)})" else peer.name
                     "$name · ${peer.connectionLabel}"
                 }.toTypedArray()) { _, index ->
                     val peer = peers[index]
-                    if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-                        widgetPreferences(this).edit().putString(key, peer.deviceId).apply()
-                        ClipboardWidget.refresh(this)
-                    }
-                    if (choose) finish() else {
-                        chosen = peer
-                        handler.post(::send)
-                    }
+                    widgetPreferences(this).edit().putString(CLIPBOARD_LAPTOP_KEY, peer.deviceId).apply()
+                    ClipboardWidget.refresh(this)
+                    done("Laptop saved")
                 }.setOnCancelListener { finish() }.show()
         } else {
             chosen = target
@@ -64,6 +76,10 @@ class ClipboardSendActivity : AppCompatActivity() {
         val peer = chosen ?: return
         if (isFinishing || !hasWindowFocus()) return
         handler.removeCallbacksAndMessages(null)
+        if (clipboardLaptop(this, KdeConnect.getInstance().devices.values) !== peer) {
+            done("Choose your laptop")
+            return
+        }
         if (getSystemService(KeyguardManager::class.java).isDeviceLocked) {
             done("Unlock to send")
             return
@@ -89,7 +105,7 @@ class ClipboardSendActivity : AppCompatActivity() {
         val item = clip.getItemAt(0)
         val isImage = clip.description.hasMimeType("image/*")
         if (bridge.clipboard.busy) {
-            finish()
+            done("Already sending")
             return
         }
         val context = applicationContext

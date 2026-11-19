@@ -1,21 +1,27 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:gravity="center_vertical" android:paddingHorizontal="8dp" android:paddingVertical="6dp"
-    android:background="@drawable/pingora_widget_surface">
-    <LinearLayout android:id="@id/clipboard_widget_header" android:layout_width="wrap_content"
-        android:layout_height="wrap_content" android:gravity="center_vertical">
-        <ImageView android:id="@+id/clipboard_widget_icon" android:layout_width="24dp" android:layout_height="24dp"
-            android:src="@drawable/ic_widget_clipboard" android:contentDescription="Clipboard" android:visibility="gone" />
-        <TextView android:id="@+id/clipboard_widget_title" android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Clipboard" android:textColor="@color/widget_foreground" android:textStyle="bold"
-            android:textSize="14sp" android:singleLine="true" android:ellipsize="end" />
-        <ImageButton android:id="@id/clipboard_widget_choose" android:layout_width="30dp" android:layout_height="44dp"
-            android:src="@drawable/ic_widget_devices" android:tint="@color/widget_foreground"
-            android:background="@android:color/transparent" android:visibility="gone" android:contentDescription="Choose clipboard destination" />
-    </LinearLayout>
-    <TextView android:id="@id/pingora_widget_send" android:layout_width="0dp" android:layout_weight="1"
-        android:layout_height="wrap_content" android:minHeight="44dp" android:paddingVertical="6dp" android:layout_marginStart="8dp" android:paddingHorizontal="4dp" android:gravity="center"
-        android:background="@drawable/pingora_widget_button" android:textColor="@color/widget_on_button"
-        android:text="Send clipboard" android:textSize="13sp" android:textStyle="bold"
-        android:maxLines="2" android:ellipsize="end" />
-</LinearLayout>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical">
+        <ImageView android:id="@+id/widget_surface" android:layout_width="match_parent"
+            android:layout_height="match_parent" android:scaleType="fitXY"
+            android:src="@drawable/pingora_widget_surface" android:importantForAccessibility="no" />
+        <LinearLayout
+            android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center_vertical" android:paddingHorizontal="8dp" android:paddingVertical="6dp"
+           >
+            <LinearLayout android:id="@id/clipboard_widget_header" android:layout_width="wrap_content"
+                android:layout_height="wrap_content" android:gravity="center_vertical">
+                <ImageView android:id="@+id/clipboard_widget_icon" android:layout_width="24dp" android:layout_height="24dp"
+                    android:src="@drawable/ic_widget_clipboard" android:contentDescription="Clipboard" android:visibility="gone" />
+                <TextView android:id="@+id/clipboard_widget_title" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Clipboard" android:textColor="@color/widget_foreground" android:textStyle="bold"
+                    android:textSize="14sp" android:singleLine="true" android:ellipsize="end" />
+            </LinearLayout>
+            <TextView android:id="@id/pingora_widget_send" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:minHeight="44dp" android:paddingVertical="6dp" android:layout_marginStart="8dp" android:paddingHorizontal="4dp" android:gravity="center"
+                android:background="@drawable/pingora_widget_button" android:textColor="@color/widget_on_button"
+                android:text="Send clipboard" android:textSize="13sp" android:textStyle="bold"
+                android:maxLines="2" android:ellipsize="end" />
+        </LinearLayout>
+    </FrameLayout>
+</FrameLayout>
