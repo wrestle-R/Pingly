@@ -2,6 +2,8 @@
 
 Add the widgets from Pingora Settings or your launcher's widget picker. Tap either widget's body to open Pingora. The Devices widget lists paired devices together. Use the devices icon on the Clipboard widget to pick a send destination.
 
+Long-press a widget and drag its resize handles. Devices keeps the device names and refresh control at compact sizes. A wider or taller card has room for extra readings. Clipboard and InstaBox Resume have one-row layouts and show additional status when you make them taller. Your launcher controls the available sizes and lets you remove any extra copies.
+
 ## Clipboard
 
 Unlock the phone and tap **Send clipboard**. The button shows **Sending…** and changes to **Sent clipboard** once the laptop writes the clipboard. Older desktop builds can queue text without a delivery receipt. Android requires a momentarily focused surface to read the clipboard, so the widget uses a transparent activity and returns to the launcher after reading.
@@ -19,7 +21,7 @@ Power profiles require `powerprofilesctl` and a working power-profiles service. 
 
 ## InstaBox Resume
 
-The **InstaBox Resume** widget sends a wake request over Pingora’s paired connection to the desktop relay. Keep the relay running and reachable while the InstaBox is paused. Tap refresh to check the VM without waking it. When the relay confirms the VM is reachable, the widget shows **Running** and disables the wake button. After a wake request, the widget checks again for the VM to come online.
+The **InstaBox Resume** widget sends a wake request over Pingora’s paired connection to the desktop relay. Keep the relay running and reachable while the InstaBox is paused. Tap refresh to check the VM without waking it. When the relay confirms the VM is reachable, the widget shows **Running** and disables the wake button. After the relay accepts a wake request, the widget can spend up to 90 seconds checking for the VM to come online.
 
 The desktop enables this feature only when its private app data directory contains an `instabox-resume.json` file with mode `0600`. On Linux the directory is normally `~/.local/share/io.github.wrestle-r.pingora`. Set `phone_id` to the exact stable ID of the authorized paired phone and `helper` to an absolute path to a local executable that resumes one preconfigured InstaBox. Restart Pingora Desktop after configuring it. The helper takes no arguments. It reports accepted requests as JSON with `type: "resume"`, `http_status: "200"` or `"202"`, and `has_error: false`. Keep the provider credential with the relay helper. The Android app receives the request result and never needs that credential.
 

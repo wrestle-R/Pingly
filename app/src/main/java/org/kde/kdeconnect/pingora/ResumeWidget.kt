@@ -8,8 +8,10 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.widget.RemoteViews
 import org.json.JSONObject
 import org.kde.kdeconnect.KdeConnect
@@ -21,20 +23,25 @@ class ResumeWidget : AppWidgetProvider() {
     companion object {
         private const val ACTION = "io.github.wrestle_r.pingora.INSTABOX_RESUME"
         private const val REFRESH = "io.github.wrestle_r.pingora.INSTABOX_STATUS"
+        private const val STATUS_FRESH_MS = 30_000L
+        private const val STARTUP_WINDOW_MS = 90_000L
+        private const val PROBE_INTERVAL_MS = 8_000L
         private val handler = Handler(Looper.getMainLooper())
         private var label = "Resume"
+        private var compactLabel = label
         private var status = "Check status"
-        private var checkedAt = -60_000L
-        private var request: String? = null
-        private var relayPeer: String? = null
+        private var checkedAt = -STATUS_FRESH_MS
+        private var request: Request? = null
+        private var startup: Startup? = null
+
+        private data class Request(val receipt: String, val peer: String, val wake: Boolean)
+        private data class Startup(val peer: String, val deadline: Long)
 
         private fun relay() = KdeConnect.getInstance().devices.values
             .filter { it.isPaired && it.isReachable }
             .mapNotNull { it.getPlugin<BridgePlugin>() }
             .filter { it.canResumeInstabox }
             .singleOrNull()
-
-        fun isAvailable() = relay() != null
 
         fun refresh(context: Context) {
             handler.post {
@@ -47,86 +54,144 @@ class ResumeWidget : AppWidgetProvider() {
         fun checkIfPresent(context: Context) = handler.post {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, ResumeWidget::class.java))
-            if (ids.isNotEmpty() && android.os.SystemClock.elapsedRealtime() - checkedAt >= 30_000 &&
+            if (ids.isNotEmpty() && startup == null && SystemClock.elapsedRealtime() - checkedAt >= STATUS_FRESH_MS &&
                 relay()?.canCheckInstabox == true) start(context.applicationContext, wake = false)
         }
 
-        private fun finish(context: Context, message: String, running: Boolean = false) {
+        private fun finish(context: Context, message: String, shortMessage: String = "Resume", running: Boolean = false) {
             request = null
-            relayPeer = null
+            startup = null
             status = message
             label = if (running) "Running" else "Resume"
-            val updated = android.os.SystemClock.elapsedRealtime()
+            compactLabel = if (running) label else shortMessage
+            val updated = SystemClock.elapsedRealtime()
             checkedAt = updated
             refresh(context)
             if (running) handler.postDelayed({
-                if (request == null && checkedAt == updated) {
+                if (request == null && startup == null && checkedAt == updated) {
                     label = "Resume"
+                    compactLabel = label
                     status = "Last seen running"
                     refresh(context)
                 }
-            }, 30_000)
+            }, STATUS_FRESH_MS)
+        }
+
+        private fun waitForStartup(context: Context, waiting: Startup) {
+            request = null
+            val remaining = waiting.deadline - SystemClock.elapsedRealtime()
+            if (remaining <= 0) {
+                finish(context, "Resume accepted. Still waiting for InstaBox.", "Status unknown")
+                return
+            }
+            status = "Waiting for InstaBox…"
+            label = "Starting…"
+            compactLabel = label
+            refresh(context)
+            handler.postDelayed({
+                if (startup === waiting && request == null) start(context, wake = false)
+            }, minOf(PROBE_INTERVAL_MS, remaining))
         }
 
         fun result(context: Context, peer: String, data: JSONObject) = handler.post {
-            if (request == null || peer != relayPeer || data.optString("receipt") != request) return@post
+            val pending = request ?: return@post
+            if (peer != pending.peer || data.optString("receipt") != pending.receipt) return@post
             when (data.optString("state")) {
                 "running" -> finish(context, "InstaBox is online", running = true)
-                "requested" -> {
-                    finish(context, "Resume requested")
-                    handler.postDelayed({ if (relay()?.canCheckInstabox == true) start(context, wake = false) }, 10_000)
+                "requested" -> if (pending.wake && relay()?.let { it.peerId == peer && it.canCheckInstabox } == true) {
+                    val waiting = Startup(peer, SystemClock.elapsedRealtime() + STARTUP_WINDOW_MS)
+                    startup = waiting
+                    waitForStartup(context, waiting)
+                } else {
+                    finish(context, "Resume accepted", "Requested")
                 }
-                "unknown" -> finish(context, "Status unknown")
-                "unavailable" -> finish(context, "Status check unavailable")
-                "busy" -> finish(context, "Try in a minute")
-                else -> finish(context, "Request failed")
+                "unknown" -> startup?.let { waitForStartup(context, it) }
+                    ?: finish(context, "Status unknown", "Status unknown")
+                "unavailable" -> finish(context, "Status check unavailable", "Unavailable")
+                "busy" -> finish(context, "Try in a minute", "Try again soon")
+                else -> finish(context, "Request failed", "Try again")
             }
         }
 
         private fun start(context: Context, wake: Boolean) {
-            if (request != null) return
+            val waiting = startup
+            if (request != null || wake && (waiting != null || label == "Running")) return
+            if (waiting != null && SystemClock.elapsedRealtime() >= waiting.deadline) {
+                waitForStartup(context, waiting)
+                return
+            }
             if (wake && context.getSystemService(KeyguardManager::class.java).isDeviceLocked) {
-                finish(context, "Unlock to resume")
+                finish(context, "Unlock to resume", "Unlock to resume")
                 return
             }
             val relay = relay()
+            if (waiting != null && (relay?.peerId != waiting.peer || !relay.canCheckInstabox)) {
+                waitForStartup(context, waiting)
+                return
+            }
             if (relay == null) {
                 org.kde.kdeconnect.BackgroundService.ForceRefreshConnections(context)
-                finish(context, "Wake relay offline")
+                finish(context, "Wake relay offline", "Relay offline")
                 return
             }
             if (!wake && !relay.canCheckInstabox) {
-                finish(context, "Status check unavailable")
+                finish(context, "Status check unavailable", "Unavailable")
                 return
             }
             val receipt = UUID.randomUUID().toString()
             val kind = if (wake) "instabox_resume" else "instabox_status"
             if (!relay.send(kind, JSONObject().put("receipt", receipt))) {
-                finish(context, "Request failed")
+                if (waiting != null) waitForStartup(context, waiting) else finish(context, "Request failed", "Try again")
                 return
             }
-            relayPeer = relay.peerId
-            request = receipt
-            status = if (wake) "Requesting resume…" else "Checking status…"
-            label = if (wake) "Requesting…" else "Resume"
+            val pending = Request(receipt, relay.peerId, wake)
+            request = pending
+            if (waiting == null) {
+                status = if (wake) "Requesting resume…" else "Checking status…"
+                label = if (wake) "Requesting…" else "Checking…"
+                compactLabel = label
+            }
             refresh(context)
             handler.postDelayed({
-                if (request == receipt) finish(context, "No reply from relay")
-            }, if (wake) 65_000 else 15_000)
+                if (request === pending) {
+                    if (waiting != null) waitForStartup(context, waiting) else finish(context, "No reply from relay", "No reply")
+                }
+            }, if (wake) 65_000 else minOf(15_000, waiting?.let { it.deadline - SystemClock.elapsedRealtime() } ?: 15_000))
         }
     }
 
     override fun onEnabled(context: Context) { checkIfPresent(context) }
 
+    override fun onDisabled(context: Context) {
+        handler.removeCallbacksAndMessages(null)
+        request = null
+        startup = null
+        checkedAt = -STATUS_FRESH_MS
+        status = "Check status"
+        label = "Resume"
+        compactLabel = label
+    }
+
+    override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, options: Bundle) {
+        onUpdate(context, manager, intArrayOf(id))
+    }
+
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+        val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
         for (id in ids) {
-            val view = RemoteViews(context.packageName, R.layout.pingora_resume_widget)
-            view.setTextViewText(R.id.resume_widget_button, label)
-            view.setTextViewText(R.id.resume_widget_status, status)
-            view.setContentDescription(R.id.resume_widget_button, if (label == "Resume") "Resume InstaBox" else label)
-            view.setOnClickPendingIntent(R.id.resume_widget_button, if (label == "Running") null else action(context, id, ACTION))
-            view.setOnClickPendingIntent(R.id.resume_widget_refresh, action(context, id, REFRESH))
-            manager.updateAppWidget(id, view)
+            val views = widgetViews(context, manager, id) { size ->
+                val compact = size.height < 110 * fontScale
+                val layout = if (compact) R.layout.pingora_resume_widget_compact else R.layout.pingora_resume_widget
+                RemoteViews(context.packageName, layout).apply {
+                    val canWake = request == null && startup == null && label != "Running"
+                    setTextViewText(R.id.resume_widget_button, if (compact) compactLabel else label)
+                    if (!compact) setTextViewText(R.id.resume_widget_status, status)
+                    setContentDescription(R.id.resume_widget_button, if (canWake) "Resume InstaBox, $status" else status)
+                    setOnClickPendingIntent(R.id.resume_widget_button, if (canWake) action(context, id, ACTION) else null)
+                    setOnClickPendingIntent(R.id.resume_widget_refresh, if (request == null && startup == null) action(context, id, REFRESH) else null)
+                }
+            }
+            manager.updateAppWidget(id, views)
         }
     }
 
@@ -139,7 +204,7 @@ class ResumeWidget : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (intent.action) {
             ACTION -> start(context.applicationContext, wake = true)
-            REFRESH -> start(context.applicationContext, wake = false)
+            REFRESH -> if (startup == null) start(context.applicationContext, wake = false)
         }
     }
 }

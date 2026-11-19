@@ -1,0 +1,16 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:minHeight="60dp" android:gravity="center_vertical"
+    android:paddingHorizontal="8dp" android:paddingVertical="6dp"
+    android:background="@drawable/pingora_widget_surface">
+    <TextView android:id="@id/resume_widget_button"
+        android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+        android:minHeight="44dp" android:gravity="center" android:paddingHorizontal="4dp"
+        android:text="Resume" android:textSize="13sp" android:textStyle="bold"
+        android:maxLines="2" android:ellipsize="end" android:textColor="@color/widget_on_button"
+        android:background="@drawable/pingora_widget_button" android:contentDescription="Resume InstaBox" />
+    <ImageButton android:id="@id/resume_widget_refresh"
+        android:layout_width="40dp" android:layout_height="44dp"
+        android:background="@android:color/transparent" android:src="@drawable/ic_refresh_24dp"
+        android:scaleType="center" android:tint="@color/widget_foreground" android:contentDescription="Refresh InstaBox status" />
+</LinearLayout>
