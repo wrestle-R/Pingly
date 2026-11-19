@@ -32,8 +32,7 @@ import org.kde.kdeconnect.backends.BaseLinkProvider.ConnectionReceiver
 import org.kde.kdeconnect.backends.bluetooth.BluetoothLinkProvider
 import org.kde.kdeconnect.backends.lan.LanLinkProvider
 import org.kde.kdeconnect.helpers.NotificationHelper
-import org.kde.kdeconnect.plugins.clipboard.ClipboardFloatingActivity
-import org.kde.kdeconnect.plugins.clipboard.ClipboardPlugin
+import org.kde.kdeconnect.pingora.ClipboardSendActivity
 import org.kde.kdeconnect.plugins.runcommand.RunCommandActivity
 import org.kde.kdeconnect.plugins.runcommand.RunCommandPlugin
 import org.kde.kdeconnect.plugins.share.SendFileActivity
@@ -194,19 +193,18 @@ class BackgroundService : Service() {
             notification.setContentTitle(getString(R.string.kde_connect))
         }
 
+        val sendClipboard = Intent(this, ClipboardSendActivity::class.java).apply {
+            action = "org.kde.kdeconnect.FOREGROUND_NOTIFICATION_SEND_CLIPBOARD"
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        val sendPendingClipboard = PendingIntent.getActivity(this, 0, sendClipboard, UPDATE_IMMUTABLE_FLAGS)
+        notification.addAction(0, getString(R.string.foreground_notification_send_clipboard), sendPendingClipboard)
+
         if (connectedDevices.isEmpty()) {
             notification.setContentText(getString(R.string.foreground_notification_no_devices))
         }
         else {
             notification.setContentText(getString(R.string.foreground_notification_devices, connectedDevices.joinToString(", ")))
-
-            // Adding an action button to send clipboard manually in Android 10 and later.
-            if (!ClipboardPlugin.canSyncAutomatically(this)) {
-                val sendClipboard = ClipboardFloatingActivity.getIntent(this, true)
-                sendClipboard.action = "org.kde.kdeconnect.FOREGROUND_NOTIFICATION_SEND_CLIPBOARD"
-                val sendPendingClipboard = PendingIntent.getActivity(this, 0, sendClipboard, UPDATE_IMMUTABLE_FLAGS)
-                notification.addAction(0, getString(R.string.foreground_notification_send_clipboard), sendPendingClipboard)
-            }
 
             if (connectedDeviceIds.size == 1) {
                 val deviceId = connectedDeviceIds[0]

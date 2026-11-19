@@ -102,17 +102,25 @@ class ClipboardSendActivity : AppCompatActivity() {
             done("Clipboard empty")
             return
         }
-        val item = clip.getItemAt(0)
         val isImage = clip.description.hasMimeType("image/*")
+        val item = if (isImage) {
+            (0 until clip.itemCount).asSequence().map(clip::getItemAt).firstOrNull { it.uri?.scheme == "content" }
+                ?: clip.getItemAt(0)
+        } else {
+            clip.getItemAt(0)
+        }
         if (bridge.clipboard.busy) {
             done("Already sending")
             return
         }
         val context = applicationContext
         val id = widgetId
+        chosen = null
         ClipboardWidget.label(context, id, "Sending…")
-        bridge.clipboard.send(item, isImage) { ClipboardWidget.label(context, id, it, reset = true) }
-        finish()
+        bridge.clipboard.send(item, isImage, sourceRead = ::finish) {
+            ClipboardWidget.label(context, id, it, reset = true)
+            if (!isFinishing) finish()
+        }
     }
 
     private fun done(message: String) {
