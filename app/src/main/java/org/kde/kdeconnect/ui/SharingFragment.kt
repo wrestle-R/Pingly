@@ -201,9 +201,8 @@ class SharingFragment : Fragment() {
         if(android.os.Build.VERSION.SDK_INT>=26) {
             button("Add devices widget") { org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, laptop = true) }
             button("Add clipboard widget") { org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, laptop = false) }
-            if (org.kde.kdeconnect.pingora.ResumeWidget.isAvailable()) button("Add InstaBox Resume widget") {
-                val provider = android.content.ComponentName(context, org.kde.kdeconnect.pingora.ResumeWidget::class.java)
-                android.appwidget.AppWidgetManager.getInstance(context).requestPinAppWidget(provider, null, null)
+            button("Add InstaBox Resume widget") {
+                org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, org.kde.kdeconnect.pingora.ResumeWidget::class.java)
             }
         }
         button("Private network addresses") { startActivity(Intent(context, CustomDevicesActivity::class.java)) }

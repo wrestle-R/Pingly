@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
+import android.widget.Toast
 import org.kde.kdeconnect_tp.R
 
 object WidgetPreviews {
@@ -25,11 +26,21 @@ object WidgetPreviews {
     }
 
     fun pin(context: Context, laptop: Boolean) {
-        if (Build.VERSION.SDK_INT < 26) return
         val provider = if (laptop) LaptopWidget::class.java else ClipboardWidget::class.java
-        AppWidgetManager.getInstance(context).requestPinAppWidget(ComponentName(context, provider), Bundle().apply {
+        pin(context, provider, Bundle().apply {
             putParcelable(AppWidgetManager.EXTRA_APPWIDGET_PREVIEW, preview(context, laptop))
-        }, null)
+        })
+    }
+
+    fun pin(context: Context, provider: Class<*>, extras: Bundle? = null) {
+        if (Build.VERSION.SDK_INT < 26) return
+        val manager = AppWidgetManager.getInstance(context)
+        val component = ComponentName(context, provider)
+        if (manager.getAppWidgetIds(component).isNotEmpty()) {
+            Toast.makeText(context, "Widget already on your home screen", Toast.LENGTH_SHORT).show()
+        } else if (!manager.requestPinAppWidget(component, extras, null)) {
+            Toast.makeText(context, "Add the widget from your launcher's widget picker", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun preview(context: Context, laptop: Boolean): RemoteViews {
