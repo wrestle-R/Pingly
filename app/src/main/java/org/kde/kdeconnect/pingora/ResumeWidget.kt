@@ -29,6 +29,7 @@ class ResumeWidget : AppWidgetProvider() {
         private const val PROBE_INTERVAL_MS = 8_000L
         private const val RECONNECT_WINDOW_MS = 10_000L
         private const val RECONNECT_INTERVAL_MS = 250L
+        private const val STATUS_RETRY_DELAY_MS = 10_000L
         private val handler = Handler(Looper.getMainLooper())
         private var label = "Resume"
         private var compactLabel = label
@@ -36,9 +37,10 @@ class ResumeWidget : AppWidgetProvider() {
         private var checkedAt = -STATUS_FRESH_MS
         private var request: Request? = null
         private var startup: Startup? = null
+        private var statusRetry: Runnable? = null
         private var connecting = false
 
-        private data class Request(val receipt: String, val peer: String, val wake: Boolean)
+        private data class Request(val receipt: String, val peer: String, val checkStartup: Boolean)
         private data class Startup(val peer: String, val deadline: Long)
 
         private fun relay() = KdeConnect.getInstance().devices.values
@@ -56,20 +58,41 @@ class ResumeWidget : AppWidgetProvider() {
         }
 
         fun checkIfPresent(context: Context) = handler.post {
+            checkInstalledWidget(context, retryUnansweredRequest = true)
+        }
+
+        private fun checkInstalledWidget(context: Context, retryUnansweredRequest: Boolean) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, ResumeWidget::class.java))
             if (ids.isNotEmpty() && startup == null && SystemClock.elapsedRealtime() - checkedAt >= STATUS_FRESH_MS &&
-                relay()?.canCheckInstabox == true) start(context.applicationContext, wake = false)
+                relay()?.canCheckInstabox == true) {
+                start(context.applicationContext, wake = false, retryUnansweredRequest = retryUnansweredRequest)
+            }
         }
 
-        private fun finish(context: Context, message: String, shortMessage: String = "Resume", running: Boolean = false) {
+        private fun retryStatusOnce(context: Context) {
+            val retry = Runnable {
+                statusRetry = null
+                checkInstalledWidget(context, retryUnansweredRequest = false)
+            }
+            statusRetry = retry
+            handler.postDelayed(retry, STATUS_RETRY_DELAY_MS)
+        }
+
+        private fun finish(
+            context: Context,
+            message: String,
+            shortMessage: String = "Resume",
+            running: Boolean = false,
+            retryStatusOnReconnect: Boolean = false,
+        ) {
             request = null
             startup = null
             status = message
             label = if (running) "Running" else "Resume"
             compactLabel = if (running) label else shortMessage
             val updated = SystemClock.elapsedRealtime()
-            checkedAt = updated
+            checkedAt = if (retryStatusOnReconnect) -STATUS_FRESH_MS else updated
             refresh(context)
             if (running) handler.postDelayed({
                 if (!connecting && request == null && startup == null && checkedAt == updated) {
@@ -102,7 +125,7 @@ class ResumeWidget : AppWidgetProvider() {
             if (peer != pending.peer || data.optString("receipt") != pending.receipt) return@post
             when (data.optString("state")) {
                 "running" -> finish(context, "InstaBox is online", running = true)
-                "requested" -> if (pending.wake && relay()?.let { it.peerId == peer && it.canCheckInstabox } == true) {
+                "requested" -> if (pending.checkStartup) {
                     val waiting = Startup(peer, SystemClock.elapsedRealtime() + STARTUP_WINDOW_MS)
                     startup = waiting
                     waitForStartup(context, waiting)
@@ -117,11 +140,18 @@ class ResumeWidget : AppWidgetProvider() {
             }
         }
 
-        private fun start(context: Context, wake: Boolean, reconnectUntil: Long? = null) {
+        private fun start(
+            context: Context,
+            wake: Boolean,
+            reconnectUntil: Long? = null,
+            retryUnansweredRequest: Boolean = true,
+        ) {
             val waiting = startup
             if (connecting && reconnectUntil == null) return
             connecting = false
             if (request != null || wake && (waiting != null || label == "Running")) return
+            statusRetry?.let { handler.removeCallbacks(it) }
+            statusRetry = null
             if (waiting != null && SystemClock.elapsedRealtime() >= waiting.deadline) {
                 waitForStartup(context, waiting)
                 return
@@ -139,7 +169,7 @@ class ResumeWidget : AppWidgetProvider() {
                 val now = SystemClock.elapsedRealtime()
                 val deadline = reconnectUntil ?: now + RECONNECT_WINDOW_MS
                 if (now >= deadline) {
-                    finish(context, "Wake relay offline", "Relay offline")
+                    finish(context, "Wake relay offline", "Relay offline", retryStatusOnReconnect = true)
                     return
                 }
                 connecting = true
@@ -150,7 +180,10 @@ class ResumeWidget : AppWidgetProvider() {
                     refresh(context)
                     BackgroundService.ForceRefreshConnections(context)
                 }
-                handler.postDelayed({ start(context, wake, deadline) }, minOf(RECONNECT_INTERVAL_MS, deadline - now))
+                handler.postDelayed(
+                    { start(context, wake, deadline, retryUnansweredRequest) },
+                    minOf(RECONNECT_INTERVAL_MS, deadline - now),
+                )
                 return
             }
             if (!wake && !relay.canCheckInstabox) {
@@ -159,11 +192,15 @@ class ResumeWidget : AppWidgetProvider() {
             }
             val receipt = UUID.randomUUID().toString()
             val kind = if (wake) "instabox_resume" else "instabox_status"
+            val pending = Request(receipt, relay.peerId, wake && relay.canCheckInstabox)
             if (!relay.send(kind, JSONObject().put("receipt", receipt))) {
-                if (waiting != null) waitForStartup(context, waiting) else finish(context, "Request failed", "Try again")
+                if (waiting != null) {
+                    waitForStartup(context, waiting)
+                } else {
+                    finish(context, "Request failed", "Try again", retryStatusOnReconnect = true)
+                }
                 return
             }
-            val pending = Request(receipt, relay.peerId, wake)
             request = pending
             if (waiting == null) {
                 status = if (wake) "Requesting resume…" else "Checking status…"
@@ -173,7 +210,12 @@ class ResumeWidget : AppWidgetProvider() {
             refresh(context)
             handler.postDelayed({
                 if (request === pending) {
-                    if (waiting != null) waitForStartup(context, waiting) else finish(context, "No reply from relay", "No reply")
+                    if (waiting != null) {
+                        waitForStartup(context, waiting)
+                    } else {
+                        finish(context, "No reply from relay", "No reply", retryStatusOnReconnect = true)
+                        if (retryUnansweredRequest) retryStatusOnce(context)
+                    }
                 }
             }, if (wake) 65_000 else minOf(15_000, waiting?.let { it.deadline - SystemClock.elapsedRealtime() } ?: 15_000))
         }
@@ -189,6 +231,7 @@ class ResumeWidget : AppWidgetProvider() {
         handler.removeCallbacksAndMessages(null)
         request = null
         startup = null
+        statusRetry = null
         connecting = false
         checkedAt = -STATUS_FRESH_MS
         status = "Check status"
