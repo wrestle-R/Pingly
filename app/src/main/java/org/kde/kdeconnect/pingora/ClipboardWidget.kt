@@ -46,7 +46,8 @@ class ClipboardWidget : AppWidgetProvider() {
             val peer = if (target == null) peers.singleOrNull() else peers.firstOrNull { it.deviceId == target }
             val label = synchronized(labels) { labels[id] }
             val views = widgetViews(context, manager, id) { size ->
-                val compact = size.height < 132
+                val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
+                val compact = size.height < 132 * fontScale
                 val choosing = peers.size > 1 || peer == null && peers.isNotEmpty()
                 val layout = if (compact) R.layout.pingora_clipboard_widget_compact else R.layout.pingora_clipboard_widget
                 val view = RemoteViews(context.packageName, layout)
@@ -57,7 +58,6 @@ class ClipboardWidget : AppWidgetProvider() {
                     view.setTextViewCompoundDrawables(R.id.pingora_widget_status, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
                 }
                 if (compact) {
-                    val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
                     val showTitle = size.width >= (if (choosing) 256 else 200) * fontScale
                     view.setViewVisibility(R.id.clipboard_widget_title, if (showTitle) View.VISIBLE else View.GONE)
                     view.setViewVisibility(R.id.clipboard_widget_icon, if (!showTitle && !choosing) View.VISIBLE else View.GONE)

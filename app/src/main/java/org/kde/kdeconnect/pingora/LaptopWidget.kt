@@ -118,7 +118,8 @@ class LaptopWidget : AppWidgetProvider() {
         view.setOnClickPendingIntent(R.id.widget_root, widgetOpenApp(context, id, null))
         view.setOnClickPendingIntent(R.id.laptop_widget_refresh, refreshIntent(context, id))
         val fontScale = context.resources.configuration.fontScale.coerceAtLeast(1f)
-        val maxRows = if (size.height >= 240 * fontScale) 4 else 2
+        val showDetails = size.height >= 50 + 80 * fontScale
+        val maxRows = if (showDetails) ((size.height - 50) / (40 * fontScale)).toInt().coerceIn(2, 4) else 2
         view.removeAllViews(R.id.devices_widget_rows)
         for (peer in peers.take(maxRows)) {
             val saved = LaptopTelemetry.read(context, peer.deviceId)
@@ -127,14 +128,19 @@ class LaptopWidget : AppWidgetProvider() {
             val connection = if (peer.isReachable && peer.getPlugin<BridgePlugin>()?.isReady != true) "Connecting…" else peer.connectionLabel
             val status = if (size.width < 280 * fontScale) connection.removePrefix("Connected via ") else connection
             val battery = if (level in 0..100) "$level%" else ""
-            val usage = if (size.width >= 220 * fontScale) {
+            val usage = if (showDetails && size.width >= 220 * fontScale) {
                 val (cpu, ram) = metricValues(data)
                 if (cpu != "—" || ram != "—") "CPU $cpu · RAM $ram" else ""
             } else {
                 ""
             }
             val row = deviceWidgetRow(context, peer.name, status, battery, usage)
-            row.setTextViewCompoundDrawables(R.id.devices_widget_status, if (peer.usesPrivateVpn) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
+            if (!showDetails) {
+                row.setViewVisibility(R.id.devices_widget_status, View.GONE)
+                row.setContentDescription(R.id.devices_widget_name, "${peer.name}, $connection")
+            }
+            val routeView = if (showDetails) R.id.devices_widget_status else R.id.devices_widget_name
+            row.setTextViewCompoundDrawables(routeView, if (peer.usesPrivateVpn) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
             row.setOnClickPendingIntent(R.id.devices_widget_row, widgetOpenApp(context, id, peer.deviceId))
             view.addView(R.id.devices_widget_rows, row)
         }

@@ -1,9 +1,9 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
-    android:gravity="center_vertical" android:paddingHorizontal="14dp" android:paddingVertical="8dp"
+    android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:gravity="center_vertical" android:paddingHorizontal="8dp" android:paddingVertical="6dp"
     android:background="@drawable/pingora_widget_surface">
     <LinearLayout android:id="@id/clipboard_widget_header" android:layout_width="wrap_content"
-        android:layout_height="match_parent" android:gravity="center_vertical">
+        android:layout_height="wrap_content" android:gravity="center_vertical">
         <ImageView android:id="@+id/clipboard_widget_icon" android:layout_width="24dp" android:layout_height="24dp"
             android:src="@drawable/ic_widget_clipboard" android:contentDescription="Clipboard" android:visibility="gone" />
         <TextView android:id="@+id/clipboard_widget_title" android:layout_width="wrap_content" android:layout_height="wrap_content"
