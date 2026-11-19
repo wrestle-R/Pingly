@@ -206,6 +206,11 @@ class SharingFragment : Fragment() {
             }
         }
         button("Private network addresses") { startActivity(Intent(context, CustomDevicesActivity::class.java)) }
+        button("Tailscale app routing") {
+            startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(
+                "https://tailscale.com/docs/features/client/android-app-split-tunneling"
+            )))
+        }
         button("Connection & Android permissions") {(activity as? MainActivity)?.openPingoraPage("health")}
         text("Permissions & folders", true)
         text("Sharing features start enabled. Android still needs your approval for notification access and folders.")

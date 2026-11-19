@@ -31,6 +31,8 @@ Set the optional `status_helper` to an absolute path to a separate read-only exe
 
 Connect the phone and laptop to the same Tailscale network. Keep Pingora running on the laptop, then add the laptop's Tailscale IPv4 address in **Settings → Private network addresses** on the phone. Pair in Pingora if the devices are new. The shield and **Connected via Tailscale** label identify a link through the Tailscale interface. See [Tailscale's device connection guide](https://tailscale.com/docs/how-to/connect-to-devices).
 
+On a personal Android phone, leave the Tailscale exit node off to keep general internet traffic on your normal connection. In Tailscale, open your profile and select **App-based split tunneling**. Check each banking app that needs to bypass the VPN and leave Pingora unchecked. A Pingora-only VPN allowlist requires managed Android. Set Tailscale's `IncludedPackageNames` policy to `io.github.wrestle_r.pingora` for the release app or `io.github.wrestle_r.pingora.debug` for the debug build. [Tailscale's Android split tunneling guide](https://tailscale.com/docs/features/client/android-app-split-tunneling)
+
 ## Desktop background connection
 
 The Linux installer creates a user-owned `pingora.service` when a user systemd manager is available. It starts at login and restarts after failure. Closing the desktop window hides it while sharing continues. Use Settings → Quit Pingora or `systemctl --user stop pingora.service` to disconnect intentionally. On other setups, keep Pingora running in the desktop session.
