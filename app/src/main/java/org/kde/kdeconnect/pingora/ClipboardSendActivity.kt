@@ -1,10 +1,12 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package org.kde.kdeconnect.pingora
 
+import android.app.Activity
 import android.app.KeyguardManager
 import android.appwidget.AppWidgetManager
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -21,6 +23,58 @@ internal val Device.canBeClipboardLaptop: Boolean
 internal fun clipboardLaptop(context: Context, peers: Collection<Device>): Device? {
     val id = widgetPreferences(context).getString(CLIPBOARD_LAPTOP_KEY, null) ?: return null
     return peers.firstOrNull { it.deviceId == id && it.canBeClipboardLaptop }
+}
+
+/** The main app already has focus. Only the launcher, tile and chooser need another activity. */
+internal fun sendClipboardFrom(activity: Activity) {
+    val target = clipboardLaptop(activity, KdeConnect.getInstance().devices.values)
+    val bridge = target?.getPlugin<BridgePlugin>()
+    if (activity.hasWindowFocus() && bridge?.isReady == true) {
+        sendFocusedClipboard(activity, bridge, AppWidgetManager.INVALID_APPWIDGET_ID)
+    } else {
+        activity.startActivity(Intent(activity, ClipboardSendActivity::class.java))
+    }
+}
+
+private fun sendFocusedClipboard(
+    context: Context,
+    bridge: BridgePlugin,
+    widgetId: Int,
+    onSourceRead: (() -> Unit)? = null,
+) {
+    val app = context.applicationContext
+    var closeActivity = onSourceRead
+    fun close() {
+        val callback = closeActivity
+        closeActivity = null
+        callback?.invoke()
+    }
+    fun done(message: String) {
+        close()
+        ClipboardWidget.label(app, widgetId, message, reset = true)
+    }
+
+    if (context.getSystemService(KeyguardManager::class.java).isDeviceLocked) {
+        done("Unlock to send")
+        return
+    }
+    if (!bridge.canSend("clipboard")) {
+        done("Clipboard disabled")
+        return
+    }
+    if (bridge.clipboard.busy) {
+        done("Already sending")
+        return
+    }
+    val clip = context.getSystemService(ClipboardManager::class.java).primaryClip
+    if (clip == null || clip.itemCount == 0) {
+        done("Clipboard empty")
+        return
+    }
+    if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+        ClipboardWidget.label(app, widgetId, "Sending…")
+    }
+    bridge.clipboard.send(clip, sourceRead = ::close, done = ::done)
 }
 
 /** A transparent focused activity lets Android authorize the widget's clipboard read. */
@@ -46,12 +100,12 @@ class ClipboardSendActivity : AppCompatActivity() {
     }
 
     private fun prepare() {
-        val peers = KdeConnect.getInstance().devices.values
-            .filter { it.canBeClipboardLaptop }
-            .withoutOfflineDuplicates()
-            .sortedWith(compareBy({ it.name.lowercase() }, { it.deviceId }))
-        val target = clipboardLaptop(this, KdeConnect.getInstance().devices.values)
+        val devices = KdeConnect.getInstance().devices.values
+        val target = clipboardLaptop(this, devices)
         if (intent.action == CHOOSE_LAPTOP || target == null) {
+            val peers = devices.filter { it.canBeClipboardLaptop }
+                .withoutOfflineDuplicates()
+                .sortedWith(compareBy({ it.name.lowercase() }, { it.deviceId }))
             if (peers.isEmpty()) {
                 done("Pair a laptop")
                 return
@@ -68,7 +122,7 @@ class ClipboardSendActivity : AppCompatActivity() {
                 }.setOnCancelListener { finish() }.show()
         } else {
             chosen = target
-            handler.post(::send)
+            send()
         }
     }
 
@@ -93,25 +147,8 @@ class ClipboardSendActivity : AppCompatActivity() {
             if (attempts < 26) handler.postDelayed(::send, 200) else done("Laptop offline")
             return
         }
-        if (!bridge.canSend("clipboard")) {
-            done("Clipboard disabled")
-            return
-        }
-        val clip = getSystemService(ClipboardManager::class.java).primaryClip
-        if (clip == null || clip.itemCount == 0) {
-            done("Clipboard empty")
-            return
-        }
-        if (bridge.clipboard.busy) {
-            done("Already sending")
-            return
-        }
-        val context = applicationContext
-        val id = widgetId
         chosen = null
-        ClipboardWidget.label(context, id, "Sending…")
-        bridge.clipboard.send(clip, sourceRead = ::finish) {
-            ClipboardWidget.label(context, id, it, reset = true)
+        sendFocusedClipboard(this, bridge, widgetId) {
             if (!isFinishing) finish()
         }
     }

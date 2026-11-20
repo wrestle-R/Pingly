@@ -15,7 +15,7 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc, Mutex,
     },
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 
 pub fn now() -> u64 {
@@ -1072,6 +1072,41 @@ impl Runtime {
             _ => {}
         }
     }
+    fn receive_pending(self: &Arc<Self>, id: &str) {
+        if let Ok(batch) = service::take(id) {
+            for raw in batch {
+                if let Ok(packet) = serde_json::from_str(&raw) {
+                    self.receive(id, packet);
+                }
+            }
+        }
+    }
+
+    fn wait_for_next_poll(self: &Arc<Self>) {
+        let deadline = Instant::now() + Duration::from_millis(500);
+        // A single clipboard burst fills one native batch. Drain the active peers
+        // promptly so the sender can start the next burst while idle polling stays slow.
+        while !self.stop.load(Ordering::Relaxed) {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() {
+                break;
+            }
+            let active = self
+                .live
+                .lock()
+                .map(|live| live.clipboard_images.keys().cloned().collect::<Vec<_>>())
+                .unwrap_or_default();
+            if active.is_empty() {
+                std::thread::sleep(remaining);
+                break;
+            }
+            std::thread::sleep(remaining.min(Duration::from_millis(15)));
+            for id in active {
+                self.receive_pending(&id);
+            }
+        }
+    }
+
     pub fn run(self: Arc<Self>) {
         let mut maintenance = 0u64;
         while !self.stop.load(Ordering::Relaxed) {
@@ -1207,13 +1242,7 @@ impl Runtime {
                             self.send(&id,"notification_action",json!({"source":action.source,"version":action.version,"action":"dismiss","action_id":action.action_id})).ok();
                         }
                     }
-                    if let Ok(batch) = service::take(&id) {
-                        for raw in batch {
-                            if let Ok(packet) = serde_json::from_str(&raw) {
-                                self.receive(&id, packet);
-                            }
-                        }
-                    }
+                    self.receive_pending(&id);
                 }
             } else {
                 if let Ok(mut l) = self.live.lock() {
@@ -1231,7 +1260,7 @@ impl Runtime {
                     folders.clear();
                 }
             }
-            std::thread::sleep(Duration::from_millis(500));
+            self.wait_for_next_poll();
         }
     }
 }

@@ -20,6 +20,7 @@ import org.kde.kdeconnect.KdeConnect
 import org.kde.kdeconnect.pingora.BridgePlugin
 import org.kde.kdeconnect.pingora.SharingPolicy
 import org.kde.kdeconnect.pingora.connectionLabel
+import org.kde.kdeconnect.pingora.sendClipboardFrom
 import org.kde.kdeconnect.pingora.withoutOfflineDuplicates
 
 class SharingFragment : Fragment() {
@@ -264,7 +265,7 @@ class SharingFragment : Fragment() {
             if(bridge?.canSend("files")!=true || bridge.canSend("clipboard")!=true)
                 text("Some actions are unavailable. Check the connection and feature switches in Settings on both devices.")
             button("Send clipboard") {
-                startActivity(Intent(context, org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java))
+                sendClipboardFrom(requireActivity())
             }
             button("Send file", bridge?.canSend("files")==true) { selectedPeer=device.deviceId;filePicker.launch(arrayOf("*/*")) }
             }
@@ -369,7 +370,7 @@ class SharingFragment : Fragment() {
             label(root,"Send from phone",17f,true)
             val sendActions=LinearLayout(context).apply {orientation=LinearLayout.HORIZONTAL;root.addView(this)}
             action(sendActions,"Send clipboard",primary=true) {
-                startActivity(Intent(context,org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java))
+                sendClipboardFrom(requireActivity())
             }
             action(sendActions,"Send file",bridge?.canSend("files")==true && peer.isReachable,true) {filePicker.launch(arrayOf("*/*"))}
             for(index in 0 until sendActions.childCount) sendActions.getChildAt(index).layoutParams=LinearLayout.LayoutParams(0,60.dp(),1f).apply {setMargins(if(index==0)0 else 4.dp(),0,if(index==0)4.dp() else 0,0)}

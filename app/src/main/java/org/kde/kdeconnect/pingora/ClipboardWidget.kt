@@ -27,10 +27,11 @@ class ClipboardWidget : AppWidgetProvider() {
                 return
             }
             synchronized(labels) { labels[id] = value }
-            refresh(context)
+            val manager = AppWidgetManager.getInstance(context)
+            ClipboardWidget().onUpdate(context, manager, intArrayOf(id))
             if (reset) android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                synchronized(labels) { if (labels[id] == value) labels.remove(id) }
-                refresh(context)
+                val resetLabel = synchronized(labels) { if (labels[id] == value) labels.remove(id) else null }
+                if (resetLabel != null) ClipboardWidget().onUpdate(context, manager, intArrayOf(id))
             }, 3500)
         }
     }
