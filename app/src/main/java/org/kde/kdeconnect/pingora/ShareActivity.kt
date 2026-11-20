@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 package org.kde.kdeconnect.pingora
 
+import android.app.KeyguardManager
+import android.content.ClipData
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Button
 import android.widget.LinearLayout
@@ -19,7 +22,14 @@ class ShareActivity : AppCompatActivity() {
         setContentView(layout)
         val status=TextView(this).apply {text="Choose a paired device. Enable sharing on both devices first."};layout.addView(status)
         if(intent.action!=Intent.ACTION_SEND){status.text="Only single-item shares are supported.";return}
-        val stream=IntentCompat.getParcelableExtra(intent,Intent.EXTRA_STREAM,android.net.Uri::class.java)
+        val stream = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
+            ?: intent.clipData?.takeIf { it.itemCount == 1 }?.getItemAt(0)?.uri
+        if (stream?.scheme == "content" && intent.type?.startsWith("image/") == true) {
+            layout.addView(Button(this).apply {
+                text = "Copy image to laptop clipboard"
+                setOnClickListener { sendImageToClipboard(stream, status) }
+            })
+        }
         val text=intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
         for(device in KdeConnect.getInstance().devices.values.filter {it.isPaired}) {
             layout.addView(Button(this).apply {
@@ -36,4 +46,22 @@ class ShareActivity : AppCompatActivity() {
         }
         layout.addView(Button(this).apply {this.text="Close";setOnClickListener {finish()}})
     }
+
+    private fun sendImageToClipboard(image: Uri, status: TextView) {
+        val peer = clipboardLaptop(this, KdeConnect.getInstance().devices.values)
+        val bridge = peer?.getPlugin<BridgePlugin>()
+        status.text = when {
+            getSystemService(KeyguardManager::class.java).isDeviceLocked -> "Unlock to send"
+            peer == null -> "Choose a clipboard laptop in Pingly Settings"
+            bridge?.isReady != true -> "Clipboard laptop offline"
+            !bridge.canSend("clipboard") -> "Clipboard disabled"
+            bridge.clipboard.busy -> "Already sending"
+            else -> {
+                val source = ClipData.newRawUri("Shared image", image)
+                bridge.clipboard.send(source, sourceRead = {}) { result -> status.text = result }
+                "Sending image to ${peer.name}…"
+            }
+        }
+    }
+
 }

@@ -41,8 +41,8 @@ android {
         applicationId = "io.github.wrestle_r.pingora"
         minSdk = 23
         targetSdk = 37
-        versionCode = 1014
-        versionName = "0.1.14"
+        versionCode = 1015
+        versionName = "0.1.15"
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
     buildFeatures {
