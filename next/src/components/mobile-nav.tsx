@@ -22,7 +22,7 @@ export default function MobileNav() {
         </SheetTrigger>
         <SheetContent>
           <SheetHeader>
-            <SheetTitle>Explore Pingora</SheetTitle>
+            <SheetTitle>Explore Pingly</SheetTitle>
             <SheetDescription>
               Your phone and laptop, a little closer.
             </SheetDescription>

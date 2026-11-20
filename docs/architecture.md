@@ -6,7 +6,7 @@ The product contract is [product plan](plan.md). This describes the proposed imp
 
 Prefer a maintained, minimal KDE Connect derivative rather than rewriting discovery, TLS, pairing and every plugin. Android stays native Kotlin/Java using upstream AndroidX, views/Compose and Gradle conventions. Desktop uses a Tauri shell (local UI + Rust boundary). KDE Connect Qt/C++ service/plugin reuse can sit behind a native service/sidecar adapter; validate build, packaging and IPC before choosing it. Do not silently switch back to a Qt-only desktop UI or assume source compatibility across Rust/C++. Foner Bluetooth support is a separate optional capability.
 
-Use distinct Android package, desktop application ID, D-Bus names, config paths, service names and notification origin identity so Pingora and KDE Connect can coexist. Exact identities must be locked before the first signed beta. Prevent importing unwanted upstream plugins: remote input/slides, media, arbitrary commands and full SMS client are out.
+Use distinct Android package, desktop application ID, D-Bus names, config paths, service names and notification origin identity so Pingly and KDE Connect can coexist. Exact identities must be locked before the first signed beta. Prevent importing unwanted upstream plugins: remote input/slides, media, arbitrary commands and full SMS client are out.
 
 Use the requested root directories: next/ (Next.js site), app/ (native Android), tauri/ (Tauri desktop) and docs/ (planning/progress). The site and Tauri frontend are separate applications: the public site never has privileged desktop commands. Shared fixtures/release tooling can be introduced when needed without cluttering the root. Directory READMEs record boundaries; they are not runnable app scaffolds.
 

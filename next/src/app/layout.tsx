@@ -29,8 +29,8 @@ const manrope = localFont({
 });
 export const metadata: Metadata = {
   title: {
-    default: "Pingora · A little closer, across devices",
-    template: "%s · Pingora",
+    default: "Pingly · A little closer, across devices",
+    template: "%s · Pingly",
   },
   description:
     "An Android and Linux companion in development. Notifications, clipboard and sharing, with a little less back and forth.",
@@ -52,15 +52,15 @@ export default function Layout({
           Skip to content
         </a>
         <header className="header">
-          <Link className="brand" href="/" aria-label="Pingora home">
+          <Link className="brand" href="/" aria-label="Pingly home">
             <Image
               className="brand-mark"
-              src="/pingora.svg"
+              src="/pingly.svg"
               alt=""
               width={36}
               height={36}
             />
-            Pingora
+            Pingly
           </Link>
           <nav aria-label="Main navigation">
             <Link href="/#features">Features</Link>
@@ -78,17 +78,17 @@ export default function Layout({
           <Link className="brand" href="/">
             <Image
               className="brand-mark"
-              src="/pingora.svg"
+              src="/pingly.svg"
               alt=""
               width={36}
               height={36}
             />{" "}
-            Pingora
+            Pingly
           </Link>
           <p>A little less back and forth.</p>
           <nav aria-label="Footer">
             <Link href="/changelog">Changelog</Link>
-            <a href="https://github.com/wrestle-R/Pingora">GitHub ↗</a>
+            <a href="https://github.com/wrestle-R/Pingly">GitHub ↗</a>
             <Link href="/support">Get in touch</Link>
           </nav>
           <small>Made for Android + Linux. Still taking shape.</small>

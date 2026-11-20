@@ -6,5 +6,5 @@
     <color name="widget_on_button">#FFFFFF</color>
     <string name="pingora_clipboard_widget_description">Send copied text or images to your laptop.</string>
     <string name="pingora_laptop_widget_description">See your paired devices and their connection status.</string>
-    <string name="pingora_resume_widget_description">Wake your InstaBox through an authorized Pingora desktop.</string>
+    <string name="pingora_resume_widget_description">Wake your InstaBox through an authorized Pingly desktop.</string>
 </resources>

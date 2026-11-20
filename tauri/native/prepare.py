@@ -45,22 +45,22 @@ replace('core/backends/lan/lanlinkprovider.h', '1716', '1816')
 replace('core/backends/lan/lanlinkprovider.h', '1764', '1864')
 replace('core/backends/lan/avahidiscovery.cpp', '_kdeconnect._udp', '_pingora._udp')
 replace('core/backends/lan/mdnshdiscovery.cpp', '_kdeconnect._udp', '_pingora._udp')
-# Pairing stays in Pingora's comparison UI, never upstream KDE settings.
+# Pairing stays in Pingly's comparison UI, never upstream KDE settings.
 pairing_source = source / 'daemon/desktop_daemon.cpp'
 pairing_text = pairing_source.read_text()
 start = pairing_text.index('void DesktopDaemon::askPairingConfirmation(Device *device)')
 end = pairing_text.index('\nvoid DesktopDaemon::', start + 1)
-pairing_text = pairing_text[:start] + "void DesktopDaemon::askPairingConfirmation(Device *device)\n{\n    Q_UNUSED(device); // Pingora frontend owns pairing confirmation.\n}\n" + pairing_text[end:]
+pairing_text = pairing_text[:start] + "void DesktopDaemon::askPairingConfirmation(Device *device)\n{\n    Q_UNUSED(device); // Pingly frontend owns pairing confirmation.\n}\n" + pairing_text[end:]
 pairing_source.write_text(pairing_text)
 replace('daemon/kdeconnectd.cpp', 'QStringLiteral("kdeconnect.daemon")', 'QStringLiteral("pingora.daemon")')
-replace('daemon/kdeconnectd.cpp', 'i18n("KDE Connect Daemon")', 'i18n("Pingora service (development)")')
+replace('daemon/kdeconnectd.cpp', 'i18n("KDE Connect Daemon")', 'i18n("Pingly service")')
 # Never enumerate or instantiate system-installed KDE Connect plugins.
 replace('core/pluginloader.cpp',
     '''    const QVector<KPluginMetaData> data = KPluginMetaData::findPlugins(QStringLiteral("kdeconnect"));
     for (const KPluginMetaData &metadata : data) {
         plugins[metadata.pluginId()] = metadata;
     }''',
-    '    // Pingora build probe: no device plugins are registered or advertised.')
+    '    // Pingly build probe: no device plugins are registered or advertised.')
 p = source / 'CMakeLists.txt'
 s = p.read_text()
 start = s.index('add_subdirectory(core)')

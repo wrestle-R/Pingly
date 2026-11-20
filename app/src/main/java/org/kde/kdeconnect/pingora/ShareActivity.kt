@@ -26,7 +26,7 @@ class ShareActivity : AppCompatActivity() {
                 this.text=device.name
                 setOnClickListener {
                     val bridge=device.getPlugin<BridgePlugin>()
-                    if(bridge==null){status.text="Device offline. Open Pingora on both devices.";return@setOnClickListener}
+                    if(bridge==null){status.text="Device offline. Open Pingly on both devices.";return@setOnClickListener}
                     if(stream!=null) {Thread {bridge.files.offer(stream);runOnUiThread {status.text=bridge.files.status}}.start()}
                     else if(text!=null && BridgePlugin.validUrl(text) && bridge.canSend("files")) {bridge.send("url",JSONObject().put("url",text));status.text="Link queued for this connection."}
                     else if(text!=null && text.toByteArray(Charsets.UTF_8).size<=16384 && bridge.canSend("clipboard")) {bridge.send("clipboard",JSONObject().put("text",text));status.text="Text queued for clipboard sharing."}

@@ -7,7 +7,7 @@
     "no loadable device plugins in build probe",
     "no Bluetooth feature transport",
     "plugin manifest components and broad permissions removed",
-    "distinct Pingora vector icon",
+    "distinct Pingly vector icon",
     "no public-debug-key ignore exception",
     "upstream CI and store publishing metadata excluded",
     "reported trailing whitespace and blank EOF normalized"

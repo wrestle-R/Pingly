@@ -167,7 +167,7 @@ export function Devices({
             </EmptyMedia>
             <EmptyTitle>Bring your phone a little closer.</EmptyTitle>
             <EmptyDescription>
-              Open Pingora on both devices. A shared Wi-Fi or USB tethering
+              Open Pingly on both devices. A shared Wi-Fi or USB tethering
               network lets them find each other.
             </EmptyDescription>
           </EmptyHeader>

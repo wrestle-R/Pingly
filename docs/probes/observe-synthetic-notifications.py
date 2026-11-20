@@ -25,7 +25,7 @@ monitor.call_sync('org.freedesktop.DBus', '/org/freedesktop/DBus',
     GLib.VariantType.new('()'), Gio.DBusCallFlags.NONE, 3000, None)
 result = client.call_sync('org.freedesktop.Notifications', '/org/freedesktop/Notifications',
     'org.freedesktop.Notifications', 'Notify',
-    GLib.Variant('(susssasa{sv}i)', ('Pingora synthetic observation probe', 0, '', 'Pingora adapter check',
+    GLib.Variant('(susssasa{sv}i)', ('Pingly synthetic observation probe', 0, '', 'Pingly adapter check',
         'Synthetic fixture only. No existing content is read.', [], {'transient': GLib.Variant('b', True)}, 0)),
     GLib.VariantType.new('(u)'), Gio.DBusCallFlags.NONE, 3000, None).unpack()[0]
 client.call_sync('org.freedesktop.Notifications', '/org/freedesktop/Notifications',

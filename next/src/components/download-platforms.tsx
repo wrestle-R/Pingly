@@ -24,6 +24,8 @@ import type { PublicRelease } from "@/lib/github";
 export default function DownloadPlatforms({ release }: { release: PublicRelease | null }) {
   const asset = (name: string) => release?.assets.find((file) => file.name === name && file.bytes > 0);
   const version = release?.version.replace(/^v/, "");
+  const apk = asset(`pingly-${version}.apk`) ?? asset(`pingora-${version}.apk`);
+  const linuxArchive = asset(`pingly-${version}-linux-x86_64.tar.gz`) ?? asset(`pingora-${version}-linux-x86_64.tar.gz`);
   const [platform, setPlatform] = useState("all");
   return (
     <>
@@ -71,15 +73,15 @@ export default function DownloadPlatforms({ release }: { release: PublicRelease 
               </CardContent>
               <CardFooter className="flex flex-wrap gap-3">
                 <Badge variant="secondary">{release?.version || "Unavailable"}</Badge>
-                {!release && <Button variant="outline" asChild><a href="https://github.com/wrestle-R/Pingora/releases/latest">Open GitHub releases</a></Button>}
-                {release && name === "Android" && asset(`pingora-${version}.apk`) && (
-                  <Button asChild><a href={asset(`pingora-${version}.apk`)!.url}>Download Android APK</a></Button>
+                {!release && <Button variant="outline" asChild><a href="https://github.com/wrestle-R/Pingly/releases/latest">Open GitHub releases</a></Button>}
+                {release && name === "Android" && apk && (
+                  <Button asChild><a href={apk.url}>Download Android APK</a></Button>
                 )}
                 {release && name === "Linux" && asset("install-app.sh") && (
                   <Button asChild><a href={asset("install-app.sh")!.url}>Download Linux installer</a></Button>
                 )}
-                {release && name === "Linux" && asset(`pingora-${version}-linux-x86_64.tar.gz`) && (
-                  <Button variant="outline" asChild><a href={asset(`pingora-${version}-linux-x86_64.tar.gz`)!.url}>Linux archive</a></Button>
+                {release && name === "Linux" && linuxArchive && (
+                  <Button variant="outline" asChild><a href={linuxArchive.url}>Linux archive</a></Button>
                 )}
               </CardFooter>
             </Card>

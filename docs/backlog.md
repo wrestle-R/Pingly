@@ -7,7 +7,7 @@ The user approved the original P01–P17 breakdown and six core test boundaries.
 | P01 | Preparation: verify pinned upstream/toolchain/license candidates | None | Android and Tauri/native-service build paths and dependency requirements documented; actual file license audit; no unsupported compatibility promises |
 | P02 | Preparation: validate native notification + privacy adapters | P01 | Existing sidebar identified; notification observation/replacement/actions/lock privacy demonstrated on all three desktops |
 | P03 | Pair devices and see truthful connection/permission health | P01 | Phone/laptop approve pairing; unauthorized connection rejected; revoke works; missing permission has a useful fix |
-| P04 | Read one correctly formatted WhatsApp conversation | P02, P03 | Phone source → desktop native notification + Pingora inbox; sender/body readable; next message replaces only same thread |
+| P04 | Read one correctly formatted WhatsApp conversation | P02, P03 | Phone source → desktop native notification + Pingly inbox; sender/body readable; next message replaces only same thread |
 | P05 | Complete allowlists and conversation normalization | P04 | WhatsApp groups, Instagram, Gmail, SMS; desktop-selected apps → phone; summaries/Unicode/ambiguous IDs handled without loops |
 | P06 | Dismiss/read/reply safely and reconnect quietly | P05 | Source-supported actions work; timeout does not dismiss; stale offline dismissal cannot clear newer message; one reconnect summary |
 | P07 | Retain/search/clear bounded history and copy codes | P05 | 24h/500 cap; OTP parity; copy only supplied code; explicit history clear does not issue source dismissals |

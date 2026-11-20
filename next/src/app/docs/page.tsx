@@ -6,12 +6,12 @@ const topics = [
   [
     "getting-started",
     "Start here",
-    "Pingora is in development. There is no installable Android or Linux release yet. These notes describe the intended behaviour, not verified setup instructions. Don’t run third-party installers claiming to be Pingora.",
+    "Get the signed Android APK and Linux installer from Downloads. Open Pingly on both devices and pair them on the same network.",
   ],
   [
     "pairing",
     "Pairing & permissions",
-    "The plan is one Android phone and one Linux laptop first, with sharing over the same local network. Pairing and per-feature permissions will be documented against real builds. Notification access and selected apps will be explicit choices.",
+    "Compare the pairing codes on both devices before accepting. Review sharing permissions for each device in Settings. Android asks separately for notification access.",
   ],
   [
     "notifications",
@@ -21,7 +21,7 @@ const topics = [
   [
     "clipboard",
     "Clipboard",
-    "Automatic text sharing where the OS permits it, with a manual shade or foreground action and an Android widget as fallbacks. Android restricts background clipboard access. There is no permanent clipboard history planned.",
+    "Copy text or an image on Android, then tap Send clipboard in Pingly, the Clipboard widget or the Quick Settings tile. Paste on your unlocked laptop. Pingly keeps no clipboard history.",
   ],
   [
     "sharing",

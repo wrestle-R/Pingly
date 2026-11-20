@@ -287,7 +287,7 @@ class SharingFragment : Fragment() {
                 text("$stateLabel · ${android.text.format.Formatter.formatShortFileSize(context,offer.received)} / ${android.text.format.Formatter.formatShortFileSize(context,offer.size)}")
                 if(offer.state=="approval_required") button("Accept ${offer.name}") {Thread {bridge.files.accept(offer.id)}.start();message("Transfer accepted. Refresh to check progress.")}
                 if(offer.state=="saved") button("Open saved ${offer.name}") {
-                    try {bridge.files.savedUri(offer.id)?.let {uri->startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri,java.net.URLConnection.guessContentTypeFromName(offer.name) ?: "application/octet-stream").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))}}catch(_:Exception){message("No app can open this file. It remains saved in Pingora.")}
+                    try {bridge.files.savedUri(offer.id)?.let {uri->startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri,java.net.URLConnection.guessContentTypeFromName(offer.name) ?: "application/octet-stream").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))}}catch(_:Exception){message("No app can open this file. It remains saved in Pingly.")}
                 }
                 if(offer.state in setOf("approval_required","waiting_for_approval","sending","receiving")) button("Reject or cancel ${offer.name}") {bridge.files.reject(offer.id);render()}
             }

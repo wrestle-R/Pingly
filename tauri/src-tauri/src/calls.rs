@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 AminBlg (PipeWire interface research in Foner)
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Pingora Rust adapter for the pinned Foner-discovered interfaces; no outgoing dial API.
+// Pingly Rust adapter for the pinned Foner-discovered interfaces; no outgoing dial API.
 use dbus::{
     arg::{PropMap, Variant},
     blocking::Connection,

@@ -451,7 +451,7 @@ class Device : PacketReceiver {
         }
 
         if (!isPaired) {
-            // Pingora never dispatches feature traffic to untrusted devices.
+            // Pingly never dispatches feature traffic to untrusted devices.
             // Cancel before cleanup so retained packet references cannot execute later.
             np.cancel()
             np.payload?.close()

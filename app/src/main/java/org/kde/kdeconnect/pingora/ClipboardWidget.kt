@@ -62,7 +62,7 @@ class ClipboardWidget : AppWidgetProvider() {
                             else -> it.connectionLabel
                         }
                         "${it.name} · $status"
-                    } ?: if (laptopsAvailable) "Choose your clipboard laptop" else "Pair a laptop in Pingora")
+                    } ?: if (laptopsAvailable) "Choose your clipboard laptop" else "Pair a laptop in Pingly")
                     view.setTextViewCompoundDrawables(R.id.pingora_widget_status, if (peer?.usesPrivateVpn == true) R.drawable.ic_widget_vpn else 0, 0, 0, 0)
                 }
                 if (compact) {

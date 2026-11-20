@@ -67,7 +67,7 @@ internal object WidgetAppearance {
         }
         if (changes.isEmpty()) {
             MaterialAlertDialogBuilder(context).setTitle("Widget opacity")
-                .setMessage("Add a Pingora widget to change its background opacity.")
+                .setMessage("Add a Pingly widget to change its background opacity.")
                 .setPositiveButton("OK", null).show()
             return
         }

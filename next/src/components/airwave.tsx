@@ -10,7 +10,7 @@ export default function Airwave() {
         <div className="phone-time">09:41</div>
         <span>Tuesday, a little closer.</span>
         <div className="phone-note">
-          <b>Pingora</b>
+          <b>Pingly</b>
           <br />
           Your desktop, within reach.
         </div>
@@ -39,7 +39,7 @@ export default function Airwave() {
       </svg>
       <div className="laptop">
         <div className="laptop-screen">
-          <span>pingora / your little connection</span>
+          <span>pingly / your little connection</span>
           <div className="desktop-note">
             <i>↗</i>
             <div>

@@ -223,7 +223,7 @@ async fn offer_file(
     let state = Arc::clone(&state);
     tauri::async_runtime::spawn_blocking(move || {
         let path = rfd::FileDialog::new()
-            .set_title("Choose a file to send with Pingora")
+            .set_title("Choose a file to send with Pingly")
             .pick_file()
             .ok_or("File selection cancelled")?;
         state.offer_file(&device_id, &path)
@@ -261,7 +261,7 @@ async fn export_diagnostics(state: State<'_, Arc<runtime::Runtime>>) -> Result<(
     tauri::async_runtime::spawn_blocking(move || {
         let data = state.diagnostics()?;
         let path = rfd::FileDialog::new()
-            .set_file_name("pingora-diagnostics.json")
+            .set_file_name("pingly-diagnostics.json")
             .save_file()
             .ok_or("Export cancelled")?;
         std::fs::write(
@@ -423,7 +423,7 @@ fn main() {
                 .download_dir()
                 .or_else(|_| app.path().home_dir().map(|home| home.join("Downloads")))?;
             let runtime =
-                runtime::Runtime::open(app.path().app_data_dir()?, downloads.join("Pingora"))
+                runtime::Runtime::open(app.path().app_data_dir()?, downloads.join("Pingly"))
                     .map_err(std::io::Error::other)?;
             runtime.set_native(native::start(Arc::clone(&runtime), app.handle().clone()));
             observe::start(Arc::clone(&runtime));
@@ -457,7 +457,7 @@ fn main() {
             install_update
         ])
         .build(tauri::generate_context!())
-        .expect("Pingora desktop failed to start")
+        .expect("Pingly desktop failed to start")
         .run(|app, event| {
             if matches!(event, tauri::RunEvent::Exit) {
                 app.state::<Arc<runtime::Runtime>>()

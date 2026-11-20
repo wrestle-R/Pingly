@@ -8,7 +8,7 @@ if not re.fullmatch('[0-9a-fA-F]{64}',a.android_cert):raise SystemExit('Invalid 
 trust=Path(__file__).resolve().parents[1]/'trust'
 if a.android_cert.lower()!=(trust/'android-cert-sha256.hex').read_text().strip():raise SystemExit('Android release signer does not match the pinned identity')
 targets={}
-for key,name in [('android',f'pingora-{a.version}.apk'),('linux-x86_64',f'pingora-{a.version}-linux-x86_64.tar.gz')]:
+for key,name in [('android',f'pingly-{a.version}.apk'),('linux-x86_64',f'pingly-{a.version}-linux-x86_64.tar.gz')]:
  f=a.directory/name
  if not f.is_file():raise SystemExit(f'Missing finished artifact: {name}')
  targets[key]={'name':name,'size':f.stat().st_size,'sha256':hashlib.sha256(f.read_bytes()).hexdigest()}
@@ -20,6 +20,6 @@ with tempfile.TemporaryDirectory() as temporary:
  subprocess.run(['openssl','pkeyutl','-verify','-pubin','-keyform','DER','-inkey',str(d/'key'),'-rawin','-in',str(m),'-sigfile',str(d/'sig')],check=True,stdout=subprocess.DEVNULL)
 (a.directory/'pingora-update.sig').write_text(base64.b64encode(signature).decode()+'\n')
 import zipfile
-with zipfile.ZipFile(a.directory/f'pingora-{a.version}-android-update.zip','w',zipfile.ZIP_DEFLATED) as z:
+with zipfile.ZipFile(a.directory/f'pingly-{a.version}-android-update.zip','w',zipfile.ZIP_DEFLATED) as z:
  for name in ['pingora-update.json','pingora-update.sig',targets['android']['name']]:z.write(a.directory/name,name)
 print('Signed manifest and Android update bundle created; no private key copied.')

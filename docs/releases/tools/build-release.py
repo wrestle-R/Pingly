@@ -25,8 +25,8 @@ if stage in ['all','rust']:
  run(['cargo','clippy','--locked','--manifest-path','tauri/src-tauri/Cargo.toml','--','-D','warnings'])
 if stage in ['all','android']:
  run(['app/gradlew','-p','app','--no-daemon','--max-workers=2','-Dorg.gradle.jvmargs=-Xmx3072m','testDebugUnitTest','assembleRelease'])
- shutil.copy2(root/'app/build/outputs/apk/release/pingora-android-release-unsigned.apk',out/f'pingora-{version}-unsigned.apk')
- run(['python3','docs/releases/tools/verify-android.py',str(out/f'pingora-{version}-unsigned.apk'),'--version',version,'--version-code',str(code),'--unsigned'])
+ shutil.copy2(root/'app/build/outputs/apk/release/pingly-android-release-unsigned.apk',out/f'pingly-{version}-unsigned.apk')
+ run(['python3','docs/releases/tools/verify-android.py',str(out/f'pingly-{version}-unsigned.apk'),'--version',version,'--version-code',str(code),'--unsigned'])
 if stage in ['all','native']:
  urllib.request.urlretrieve(native['archive_url'],archive)
  if hashlib.sha256(archive.read_bytes()).hexdigest()!=native['archive_sha256']:raise SystemExit('Native source digest mismatch')
@@ -34,8 +34,8 @@ if stage in ['all','native']:
 if stage in ['all','linux']:
  run(['python3','docs/releases/tools/build-linux.py','--version',version,'--output',str(out)])
 if stage in ['all','inventory']:
- for artifact in [out/f'pingora-{version}-unsigned.apk',out/f'pingora-{version}-linux-x86_64.tar.gz',archive]:
+ for artifact in [out/f'pingly-{version}-unsigned.apk',out/f'pingly-{version}-linux-x86_64.tar.gz',archive]:
   if not artifact.is_file():raise SystemExit('Cannot inventory an incomplete build')
- with (out/f'pingora-{version}-source.tar.gz').open('wb') as file:run(['git','archive','--format=tar.gz',head],stdout=file)
+ with (out/f'pingly-{version}-source.tar.gz').open('wb') as file:run(['git','archive','--format=tar.gz',head],stdout=file)
  (out/'build-info.json').write_text(json.dumps({'commit':head,'version':version,'version_code':code,'native_archive_sha256':native['archive_sha256']},sort_keys=True)+'\n')
 print('Keyless stage complete: '+stage+'. No signing material was present in this job.')

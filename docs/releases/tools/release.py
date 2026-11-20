@@ -37,15 +37,15 @@ if hashlib.sha256(archive.read_bytes()).hexdigest()!=native_manifest['archive_sh
 shutil.rmtree(root/'tauri/target/native',ignore_errors=True)
 run(['python3','tauri/native/prepare.py',str(archive)])
 run(['python3','docs/releases/tools/build-linux.py','--version',version,'--output',str(out)])
-sdk=Path(os.environ.get('ANDROID_HOME',''));tools=sdk/'build-tools/36.0.0';apk=out/f'pingora-{version}.apk'
-run([str(tools/'apksigner'),'sign','--ks',str(key),'--ks-pass','file:'+str(password),'--ks-key-alias','pingora','--out',str(apk),'app/build/outputs/apk/release/pingora-android-release-unsigned.apk'])
+sdk=Path(os.environ.get('ANDROID_HOME',''));tools=sdk/'build-tools/36.0.0';apk=out/f'pingly-{version}.apk'
+run([str(tools/'apksigner'),'sign','--ks',str(key),'--ks-pass','file:'+str(password),'--ks-key-alias','pingora','--out',str(apk),'app/build/outputs/apk/release/pingly-android-release-unsigned.apk'])
 run([str(tools/'apksigner'),'verify',str(apk)])
 cert=subprocess.check_output(['keytool','-exportcert','-keystore',str(key),'-alias','pingora','-storepass:file',str(password)],stderr=subprocess.DEVNULL)
 run(['python3','docs/releases/tools/manifest.py','--version',version,'--version-code',str(code),'--directory',str(out),'--signing-key',str(update),'--android-cert',hashlib.sha256(cert).hexdigest()])
 # Preserve the exact source and license/provenance records for recipients.
-with (out/f'pingora-{version}-source.tar.gz').open('wb') as source:run(['git','archive','--format=tar.gz',head],stdout=source)
+with (out/f'pingly-{version}-source.tar.gz').open('wb') as source:run(['git','archive','--format=tar.gz',head],stdout=source)
 if a.publish:
  # Idempotent: gh refuses an already existing release; never clobber signed assets.
- run(['gh','release','create',a.tag,'--repo','wrestle-R/Pingora','--verify-tag','--draft','--title','Pingora '+version,'--notes','Development release. Read supported-host and remaining qualification limits before installation.',*[str(p) for p in out.iterdir()]])
+ run(['gh','release','create',a.tag,'--repo','wrestle-R/Pingly','--verify-tag','--draft','--title','Pingly '+version,'--notes','Development release. Read supported-host and remaining qualification limits before installation.',*[str(p) for p in out.iterdir()]])
  print('Complete signed draft uploaded. Publish only after artifact/qualification review.')
 else:print('Signed artifacts built locally; no GitHub release published.')

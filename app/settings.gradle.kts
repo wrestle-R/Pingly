@@ -29,4 +29,4 @@ buildscript {
     }
 }
 
-rootProject.name = "pingora-android"
+rootProject.name = "pingly-android"

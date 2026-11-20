@@ -26,7 +26,7 @@ class FileTransfers(private val context: Context, private val bridge: BridgePlug
     private val savedFiles = LinkedHashMap<String,File>()
     private val completed = ArrayDeque<Offer>()
     var status = ""; private set
-    private val directory: File get() = File(context.filesDir, "Pingora/downloads")
+    private val directory: File get() = File(context.filesDir, "Pingly/downloads")
     private fun safe(name: String) = name.isNotEmpty() && name.toByteArray().size <= 240 && !name.startsWith('.') && name.none { it.isISOControl() || it in "/\\:" }
     private fun identity(id: String) = id.isNotEmpty() && id.length <= 64 && id.all {it.isLetterOrDigit() && it.code < 128 || it == '-'}
     @Synchronized fun busy(): Boolean = incoming.isNotEmpty() || outgoing.isNotEmpty()
@@ -129,7 +129,7 @@ class FileTransfers(private val context: Context, private val bridge: BridgePlug
                         item.file?.delete()
                         saved?.let {savedFiles[id]=it};if(savedFiles.size>32)savedFiles.remove(savedFiles.keys.first())
                         item.file=null;item.offer.state="saved";completed.addLast(item.offer.copy());if(completed.size>32)completed.removeFirst();incoming.remove(id)
-                        bridge.send("file_done",JSONObject().put("id",id));status="File saved in Pingora downloads. Nothing was opened."
+                        bridge.send("file_done",JSONObject().put("id",id));status="File saved in Pingly downloads. Nothing was opened."
                     } else bridge.send("file_next",JSONObject().put("id",id).put("offset",item.offer.received))
                 }
             }

@@ -54,7 +54,7 @@ object ThemeUtil {
         val appTheme = PreferenceManager
             .getDefaultSharedPreferences(application)
             .getString("theme_pref", DEFAULT_MODE)!!
-        // Pingora uses its own consistent palette across devices.
+        // Pingly uses its own consistent palette across devices.
         applyTheme(appTheme)
     }
 }

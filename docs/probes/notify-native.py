@@ -13,7 +13,7 @@ info=call('GetServerInformation',None,'(ssss)')
 caps=call('GetCapabilities',None,'(as)')[0]
 # Only fixed synthetic content. No history reads or real notification bodies.
 def notify(replaces, body):
- return call('Notify',GLib.Variant('(susssasa{sv}i)',('Pingora adapter probe',replaces,'','Pingora synthetic adapter check',body,['default','Test action'],{'transient':GLib.Variant('b',True)},0)),'(u)')[0]
+ return call('Notify',GLib.Variant('(susssasa{sv}i)',('Pingly adapter probe',replaces,'','Pingly synthetic adapter check',body,['default','Test action'],{'transient':GLib.Variant('b',True)},0)),'(u)')[0]
 first=notify(0,'Synthetic version one. Safe to dismiss.')
 second=notify(first,'Synthetic version two. Replacement probe.')
 call('CloseNotification',GLib.Variant('(u)',(second,)),'()')

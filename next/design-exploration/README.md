@@ -1,4 +1,4 @@
-# Pingora hero exploration
+# Pingly hero exploration
 
 Ten distinct hero directions, each with light/dark variants: 20 frames total. No production design is selected. These are visual concepts, not the released app or a connected backend.
 
@@ -8,7 +8,7 @@ Ten distinct hero directions, each with light/dark variants: 20 frames total. No
 - [Labelled Codex image frames](codex-images.html): concepts 01–05, each L/D, click to enlarge.
 - [Labelled Flash screenshots](flash-previews.html): concepts 06–10, each L/D, click to enlarge.
 
-L means light; D means dark. All generated device/message content is illustrative. The physical hub in 01 is a visual metaphor, not hardware required to use Pingora.
+L means light; D means dark. All generated device/message content is illustrative. The physical hub in 01 is a visual metaphor, not hardware required to use Pingly.
 
 ## Provenance
 

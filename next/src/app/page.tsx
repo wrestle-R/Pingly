@@ -34,7 +34,7 @@ export default function Home() {
         </p>
         <div className="actions">
           <Button asChild variant="default" size="lg"><Link href="/downloads">
-            Download Pingora <span>↗</span>
+            Download Pingly <span>↗</span>
           </Link></Button>
           <Button asChild variant="outline" size="lg"><Link href="/docs">
             Read the docs
@@ -51,7 +51,7 @@ export default function Home() {
         </h2>
         <p>
           That message on your phone, that link on your laptop, that one file
-          you need over there. Pingora is built for the little things that
+          you need over there. Pingly is built for the little things that
           keep interrupting everything else.
         </p>
       </section>

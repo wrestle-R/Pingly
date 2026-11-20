@@ -13,9 +13,9 @@ qs -p ~/.config/quickshell/ii ipc call slumber status
 qs -p ~/.config/quickshell/ii ipc call slumber activate
 ```
 
-Only `status` was executed during inspection. It exposes booleans for active/secure/lidReady/lidClosed/dark/intro, a lidAction enum and error text. Do not forward arbitrary error text into diagnostics. `activate` delegates to the existing native lock-secure/display path; Pingora must never implement a separate password bypass or return “locked” before secure state is observed.
+Only `status` was executed during inspection. It exposes booleans for active/secure/lidReady/lidClosed/dark/intro, a lidAction enum and error text. Do not forward arbitrary error text into diagnostics. `activate` delegates to the existing native lock-secure/display path; Pingly must never implement a separate password bypass or return “locked” before secure state is observed.
 
-The sidebar also has Sleep/Slumber lid preference controls. Those call an internal `setLidAction` function, which is not exported over IPC. Add a reviewed narrow IPC setter before offering that phone control. An unrelated `idleSuspend` method exists; do not expose it as Slumber activation. There is no IPC unlock, and Pingora must not introduce one.
+The sidebar also has Sleep/Slumber lid preference controls. Those call an internal `setLidAction` function, which is not exported over IPC. Add a reviewed narrow IPC setter before offering that phone control. An unrelated `idleSuspend` method exists; do not expose it as Slumber activation. There is no IPC unlock, and Pingly must not introduce one.
 
 ## Capability contract
 

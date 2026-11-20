@@ -91,7 +91,7 @@ class LaptopWidget : AppWidgetProvider() {
                 view.setTextViewText(R.id.laptop_widget_ram, ram)
                 view.setTextViewText(R.id.laptop_widget_name, peer?.name ?: "Devices")
                 view.setTextViewText(R.id.laptop_widget_battery,if(level in 0..100) "$level%" else "—")
-                view.setTextViewText(R.id.laptop_widget_connection,when {peer==null->if(peers.isEmpty()) "Pair in Pingora" else "Choose a laptop";peer.isReachable!=true->"Offline · Saved reading";!fresh->"Updating · Saved reading";else->peer.connectionLabel})
+                view.setTextViewText(R.id.laptop_widget_connection,when {peer==null->if(peers.isEmpty()) "Pair in Pingly" else "Choose a laptop";peer.isReachable!=true->"Offline · Saved reading";!fresh->"Updating · Saved reading";else->peer.connectionLabel})
                 view.setTextViewText(R.id.laptop_widget_internet,(if(battery?.optBoolean("charging")==true) "Charging · " else "")+when(status.optString("internet")) {"full"->"Internet online";"portal"->"Sign-in needed";"limited"->"Internet limited";"none"->"No internet";else->"Internet unknown"})
                 val profile=status.optString("power_profile")
                 view.setImageViewResource(R.id.laptop_widget_power,when(profile) {"power-saver"->R.drawable.ic_profile_saver;"performance"->R.drawable.ic_profile_performance;else->R.drawable.ic_profile_balanced})

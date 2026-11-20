@@ -16,13 +16,13 @@ val applicationAboutData = AboutData(
         name = R.string.kde_connect,
         icon = R.drawable.pingora_icon,
         versionName = BuildConfig.VERSION_NAME,
-        bugURL = "https://github.com/wrestle-R/Pingora/issues/new/choose",
-        websiteURL = "https://pingora-seven.vercel.app/",
-        sourceCodeURL = "https://github.com/wrestle-R/Pingora",
+        bugURL = "https://github.com/wrestle-R/Pingly/issues/new/choose",
+        websiteURL = "https://pingly-seven.vercel.app/",
+        sourceCodeURL = "https://github.com/wrestle-R/Pingly",
         donateURL = null,
         authorsFooterText = R.string.pingora_upstream_credits,
         authors = listOf(
-            AboutPerson("Pingora contributors", R.string.developer, webAddress = "https://github.com/wrestle-R/Pingora"),
+            AboutPerson("Pingly contributors", R.string.developer, webAddress = "https://github.com/wrestle-R/Pingly"),
             // Have you made some contributions and think your name should be here? Open a MR to add yourself to the list :)
             AboutPerson("Albert Vaca Cintora", R.string.maintainer_and_developer, "albertvaka+kde@gmail.com"),
             AboutPerson("Aleix Pol", R.string.developer, "aleixpol@kde.org"),

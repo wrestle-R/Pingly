@@ -1,4 +1,4 @@
-# Pingora agent guidance
+# Pingly agent guidance
 
 Read docs/plan.md, docs/glossary.md and relevant docs/adr/ before changing the project. Latest user instructions override older alternatives.
 

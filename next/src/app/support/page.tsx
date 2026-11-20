@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { getPublicGithub, statusMessage } from "../../lib/github";
 export const metadata: Metadata = { title: "Support" };
-const repo = "https://github.com/wrestle-R/Pingora";
+const repo = "https://github.com/wrestle-R/Pingly";
 export default async function Support() {
   await connection();
   const github = await getPublicGithub();

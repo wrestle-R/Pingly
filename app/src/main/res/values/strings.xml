@@ -13,7 +13,7 @@ SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted
         All translations for all KDE apps are handled by the [localization team](https://l10n.kde.org).
         We really appreciate your translations, but make sure to submit them by working with the proper team!
   -->
-    <string name="kde_connect">Pingora</string>
+    <string name="kde_connect">Pingly</string>
     <string name="manifest_label_share">Send to Device</string>
     <string name="foreground_notification_no_devices">Not connected to any device</string>
     <string name="foreground_notification_devices">Connected to: %s</string>
@@ -370,8 +370,8 @@ SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted
     <string name="block_notification_contents">Block notification contents</string>
     <string name="block_notification_images">Block notification images</string>
 
-    <string name="pairing_title">Pingora devices</string>
-    <string name="pairing_description">Other devices running Pingora on the same local network should appear here.</string>
+    <string name="pairing_title">Pingly devices</string>
+    <string name="pairing_description">Other devices running Pingly on the same local network should appear here.</string>
     <string name="device_rename_title">Rename device</string>
     <string name="device_rename_confirm">Rename</string>
     <string name="refresh">Refresh</string>
@@ -675,5 +675,5 @@ SPDX-License-Identifier: GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted
     <string name="pref_mpris_volume_control_summary">Control the connected device\'s media volume using this phone\'s hardware buttons</string>
 
     <string name="pref_notification_screen_off_key" translatable="false">pref_notification_screen_off</string>
-    <string name="pingora_upstream_credits">Pingora is independently developed and reuses KDE Connect components. The upstream contributors listed here are credited for those components.</string>
+    <string name="pingora_upstream_credits">Pingly is independently developed and reuses KDE Connect components. The upstream contributors listed here are credited for those components.</string>
 </resources>

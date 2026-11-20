@@ -1,2 +1,2 @@
 import { Skeleton } from "@/components/ui/skeleton";
-export default function Loading() { return <section className="section document" role="status" aria-label="Loading page" aria-busy="true"><Skeleton className="h-4 w-32"/><Skeleton className="mt-6 h-14 w-3/4"/><Skeleton className="mt-6 h-4 w-full"/><Skeleton className="mt-3 h-4 w-2/3"/><span className="sr-only">Loading Pingora.</span></section>; }
+export default function Loading() { return <section className="section document" role="status" aria-label="Loading page" aria-busy="true"><Skeleton className="h-4 w-32"/><Skeleton className="mt-6 h-14 w-3/4"/><Skeleton className="mt-6 h-4 w-full"/><Skeleton className="mt-3 h-4 w-2/3"/><span className="sr-only">Loading Pingly.</span></section>; }

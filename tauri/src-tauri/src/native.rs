@@ -59,9 +59,9 @@ fn presentation(notice: &Notice, reveal: bool, open: bool) -> (String, String, V
     let body = if reveal {
         escape(&notice.body)
     } else {
-        "Open Pingora to view private content.".into()
+        "Open Pingly to view private content.".into()
     };
-    let mut actions = vec!["default", "Open Pingora"];
+    let mut actions = vec!["default", "Open Pingly"];
     if open {
         actions.extend(["dismiss", "Dismiss source"]);
         if notice.read {
@@ -96,7 +96,7 @@ fn notify(
         .method_call(
             "org.freedesktop.Notifications",
             "Notify",
-            ("Pingora", old, "", summary, body, actions, hints, -1i32),
+            ("Pingly", old, "", summary, body, actions, hints, -1i32),
         )?;
     Ok(id)
 }
@@ -178,7 +178,7 @@ pub fn start(runtime: Arc<Runtime>, app: tauri::AppHandle) -> SyncSender<Command
                                     "org.freedesktop.Notifications",
                                     "Notify",
                                     (
-                                        "Pingora",
+                                        "Pingly",
                                         ring_id.load(std::sync::atomic::Ordering::Relaxed),
                                         "",
                                         "Ringing this laptop",
@@ -204,14 +204,14 @@ pub fn start(runtime: Arc<Runtime>, app: tauri::AppHandle) -> SyncSender<Command
                             "org.freedesktop.Notifications",
                             "Notify",
                             (
-                                "Pingora",
+                                "Pingly",
                                 0u32,
                                 "",
                                 "Clipboard received",
                                 if copied {
                                     "Ready to paste on this laptop."
                                 } else {
-                                    "Open Pingora to copy the received text."
+                                    "Open Pingly to copy the received text."
                                 },
                                 Vec::<String>::new(),
                                 hints,
@@ -530,7 +530,7 @@ mod tests {
         let (title, body, actions) = presentation(&notice, false, false);
         assert!(!title.contains("sender"));
         assert!(!body.contains("Secret"));
-        assert_eq!(actions, vec!["default", "Open Pingora"]);
+        assert_eq!(actions, vec!["default", "Open Pingly"]);
         let (title, body, actions) = presentation(&notice, true, true);
         assert_eq!(title, "Private title · &lt;sender&gt;");
         assert_eq!(body, "Secret &amp; &lt;b&gt;markup&lt;/b&gt;");

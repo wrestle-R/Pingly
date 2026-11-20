@@ -1,4 +1,4 @@
-# Pingora desktop
+# Pingly desktop
 
 Tauri 2 is the Linux application shell. Its frontend is React + TypeScript, built with Vite and Tailwind, with shadcn/ui Radix components. Rust retains native commands, pairing approval, per-device policy, privacy enforcement, file dialogs, diagnostics, calls and signed updates. The isolated native LAN service remains a separate process. The website is never loaded into the desktop webview.
 
@@ -22,4 +22,4 @@ For frontend development run `npm --prefix tauri/frontend run dev`; it binds onl
 
 See [isolated service build](native/README.md), [architecture](../docs/architecture.md), [Slumber contract](../docs/slumber.md), and [release tools](../docs/releases/README.md). Slumber depends on the matching QuickShell setup. Optional Bluetooth calls depend on a compatible PipeWire telephony backend; unavailable integrations report unavailable. No shell plugin or arbitrary remote commands are exposed.
 
-Pingora has its own identity and original logo. KDE-derived native components retain their original licenses and credits. GPL-3.0-or-later applies to the desktop source. Development builds and tests are available; physical device, desktop compatibility and beta qualification remain tracked separately in the [local progress tracker](../docs/progress/README.md).
+Pingly has its own identity and original logo. KDE-derived native components retain their original licenses and credits. GPL-3.0-or-later applies to the desktop source. Development builds and tests are available; physical device, desktop compatibility and beta qualification remain tracked separately in the [local progress tracker](../docs/progress/README.md).

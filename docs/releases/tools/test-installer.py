@@ -42,8 +42,8 @@ class InstallerBoundary(unittest.TestCase):
         for target in [package / 'pingora-desktop', package / 'native/kdeconnectd']:
             shutil.copy2('/usr/bin/true', target)
         (package / 'brand').mkdir(exist_ok=True)
-        shutil.copy2(ROOT / 'tauri/frontend/public/brand/pingora.svg', package / 'brand/pingora.svg')
-        name = f'pingora-{version}-linux-x86_64.tar.gz'
+        shutil.copy2(ROOT / 'tauri/frontend/public/brand/pingly.svg', package / 'brand/pingora.svg')
+        name = f'pingly-{version}-linux-x86_64.tar.gz'
         with tarfile.open(output / name, 'w:gz') as archive:
             archive.add(package, arcname='Pingora')
             if unsafe:
@@ -81,6 +81,8 @@ class InstallerBoundary(unittest.TestCase):
         self.assertIn('/0.0.2/', str(current))
         entry = (self.home / '.local/share/applications/io.github.wrestle-r.pingora.desktop').read_text()
         self.assertIn('/0.0.2/Pingora/brand/pingora.svg', entry)
+        self.assertIn('Name=Pingly', entry)
+        self.assertEqual((self.home / '.local/bin/pingly').resolve(), current)
         self.assertNotEqual(self.install(old).returncode, 0)
         self.assertEqual(previous.resolve(), current)
 
@@ -88,7 +90,7 @@ class InstallerBoundary(unittest.TestCase):
         for kind in ['artifact', 'signature']:
             with self.subTest(kind=kind):
                 assets = self.assets('0.0.3')
-                target = assets / ('pingora-0.0.3-linux-x86_64.tar.gz' if kind == 'artifact' else 'pingora-update.sig')
+                target = assets / ('pingly-0.0.3-linux-x86_64.tar.gz' if kind == 'artifact' else 'pingora-update.sig')
                 target.write_bytes(target.read_bytes() + b'corrupt' if kind == 'artifact' else base64.b64encode(bytes(64)))
                 home = self.root / ('home-' + kind)
                 self.assertNotEqual(self.install(assets, home).returncode, 0)

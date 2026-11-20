@@ -10,15 +10,18 @@ export default async function Downloads() {
   const release = github.releases.find((item) => {
     if (!/^v\d+\.\d+\.\d+$/.test(item.version)) return false;
     const version = item.version.slice(1);
-    const required = [`pingora-${version}.apk`, `pingora-${version}-linux-x86_64.tar.gz`, "install-app.sh", "pingora-update.json", "pingora-update.sig"];
-    return required.every((name) => item.assets.some((asset) => asset.name === name && asset.bytes > 0));
+    const hasAsset = (name: string) => item.assets.some((asset) => asset.name === name && asset.bytes > 0);
+    const hasPackages = ["pingly", "pingora"].some((prefix) =>
+      hasAsset(`${prefix}-${version}.apk`) && hasAsset(`${prefix}-${version}-linux-x86_64.tar.gz`),
+    );
+    return hasPackages && ["install-app.sh", "pingora-update.json", "pingora-update.sig"].every(hasAsset);
   }) || null;
   return (
     <section className="section document">
       <div className="page-head">
         <span className="eyebrow">YOUR DEVICES, CONNECTED</span>
         <h1>
-          Download Pingora.
+          Download Pingly.
         </h1>
         <p>
           {release ? `Published release ${release.version}. Download the signed Android APK or Linux installer from GitHub.` : "Published releases will appear here when GitHub is available. Draft and incomplete releases are not offered."}

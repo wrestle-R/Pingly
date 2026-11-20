@@ -210,7 +210,7 @@ function SharingPeer({
                 <p className="text-sm text-muted-foreground">
                   {t.state === "sent"
                     ? "Sent to your phone."
-                    : "Saved to Downloads/Pingora. Nothing was opened."}
+                    : "Saved to Downloads/Pingly. Nothing was opened."}
                 </p>
               )}
             </div>

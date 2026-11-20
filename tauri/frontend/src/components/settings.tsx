@@ -211,7 +211,7 @@ function Updates() {
         setCandidate(null);
         setApproved(false);
         setMessage(
-          "Portable installation updated. Restart Pingora when ready. The previous installation was preserved.",
+          "Portable installation updated. Restart Pingly when ready. The previous installation was preserved.",
         );
       }
     } catch (e) {
@@ -270,8 +270,8 @@ export function Settings() {
   const [diagnostics, setDiagnostics] = useState("");
   return (
     <div className="flex flex-col gap-6">
-      <Panel title="Background connection" description="Closing the window keeps sharing connected. Open Pingora again from your application menu. Quitting stops the connection until you reopen it.">
-        <Action action={async () => { if(window.confirm("Quit Pingora and disconnect this laptop?")) await invoke("quit_app"); }}>Quit Pingora</Action>
+      <Panel title="Background connection" description="Closing the window keeps sharing connected. Open Pingly again from your application menu. Quitting stops the connection until you reopen it.">
+        <Action action={async () => { if(window.confirm("Quit Pingly and disconnect this laptop?")) await invoke("quit_app"); }}>Quit Pingly</Action>
       </Panel>
       <Updates />
       <Panel
@@ -299,11 +299,11 @@ export function Settings() {
         )}
       </Panel>
       <Panel
-        title="This is Pingora"
+        title="This is Pingly"
         description="Your phone and laptop, a little closer."
       >
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Pingora is an independent app. Its native connectivity includes reused
+          Pingly is an independent app. Its native connectivity includes reused
           KDE Connect components, with their original licenses and credits
           preserved.
         </p>

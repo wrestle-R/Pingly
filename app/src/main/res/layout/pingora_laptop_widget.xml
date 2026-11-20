@@ -48,7 +48,7 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical">
                 <TextView android:id="@+id/laptop_widget_connection" android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
-                    android:textColor="@color/widget_secondary" android:drawablePadding="4dp" android:text="Pair in Pingora" />
+                    android:textColor="@color/widget_secondary" android:drawablePadding="4dp" android:text="Pair in Pingly" />
                 <TextView android:id="@+id/laptop_widget_internet" android:layout_width="match_parent"
                     android:layout_height="wrap_content" android:textSize="12sp" android:singleLine="true" android:ellipsize="end"
                     android:textColor="@color/widget_secondary" android:visibility="gone" />

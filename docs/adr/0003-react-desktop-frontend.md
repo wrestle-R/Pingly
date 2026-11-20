@@ -15,4 +15,4 @@ Node/npm become desktop build dependencies. Runtime assets and fonts remain loca
 
 Stable protocol IDs define a device. Equal display names cannot combine trust. Unpaired same-name installations are disclosed separately; debug phone builds advertise a development suffix.
 
-The original Pingora logo and mineral/teal themes replace inherited product styling. Upstream licenses and credits remain. React tests cover UI behavior around existing approved protocol/inbox/update boundaries; physical phone and desktop qualification remain separate.
+The original Pingly logo and mineral/teal themes replace inherited product styling. Upstream licenses and credits remain. React tests cover UI behavior around existing approved protocol/inbox/update boundaries; physical phone and desktop qualification remain separate.

@@ -152,9 +152,9 @@ export default function App() {
             }}
             className="brand"
           >
-            <img src="./brand/pingora.svg" alt="" className="size-10" />
+            <img src="./brand/pingly.svg" alt="" className="size-10" />
             <span>
-              Pingora<small>Phone meets laptop.</small>
+              Pingly<small>Phone meets laptop.</small>
             </span>
           </a>
         </SidebarHeader>

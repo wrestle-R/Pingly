@@ -16,7 +16,7 @@ The user approved these six public boundaries and listed real-device acceptance 
 Run on Android and every launch Linux desktop; record exact OS, notification daemon and app versions. Do not equate compilation, a VM smoke check or an emulator pass with actual phone compatibility.
 
 - WhatsApp direct + group, Instagram messages, Gmail subjects/previews, SMS and OTPs. Several messages in one thread replace only that thread; summaries do not duplicate children. Redact fixture exports before sharing.
-- Native popup actions, sidebar replacement, lock/unlock privacy, Pingora inbox, clear-history behavior and separate read/dismiss actions. Unknown lock state suppresses private content.
+- Native popup actions, sidebar replacement, lock/unlock privacy, Pingly inbox, clear-history behavior and separate read/dismiss actions. Unknown lock state suppresses private content.
 - Disconnect, update a conversation, dismiss old version, reconnect: newest message survives; a single quiet summary appears; no echo flood.
 - Clipboard shade action and widget when phone foreground/background/locked; no immediate echo or stored clipboard history.
 - Notification access revoked, battery restrictions, app force-stop/relaunch, reboot and laptop suspend/resume yield truthful health/recovery.

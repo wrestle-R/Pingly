@@ -2,7 +2,7 @@
 
 Status: accepted product contract.
 
-Existing native sidebar is primary; Pingora inbox also stores retained text. One latest-message presentation per known conversation; do not merge unrelated conversations when identity is uncertain. Three-line previews are a presentation goal; native service capabilities vary.
+Existing native sidebar is primary; Pingly inbox also stores retained text. One latest-message presentation per known conversation; do not merge unrelated conversations when identity is uncertain. Three-line previews are a presentation goal; native service capabilities vary.
 
 Ordinary messages and OTP notifications share retention: 24h or 500 entries. No special OTP expiry. Source redaction is accepted. Friends hide locked previews by default; explicit opt-in allows content. Owner laptop can opt in.
 

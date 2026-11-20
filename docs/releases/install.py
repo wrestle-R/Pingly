@@ -5,7 +5,7 @@ from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--tag');p.add_argument('--github-auth',action='store_true',help='Use gh for an authorized private repository');p.add_argument('--source',type=Path,help='Local directory of signed release assets');p.add_argument('--home',type=Path,default=Path.home());a=p.parse_args()
 if __import__('sys').version_info<(3,12):raise SystemExit('Python 3.12+ is required')
 if os.uname().sysname!='Linux' or os.uname().machine!='x86_64':raise SystemExit('Only Linux x86_64 is supported by this installer')
-repo='wrestle-R/Pingora'
+repo='wrestle-R/Pingly'
 PUBLIC_KEY='20131ae1e757a3fb4cb029a7ad54f969f5db77e269e83e0545d7e7c4ad65535f'
 if a.tag and not re.fullmatch(r'v\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?',a.tag):raise SystemExit('Invalid release tag')
 # Resolve latest once, so metadata, signature and artifacts cannot cross releases.
@@ -13,7 +13,7 @@ if not a.tag and not a.source:
  if a.github_auth:
   a.tag=subprocess.check_output(['gh','release','view','--repo',repo,'--json','tagName','--jq','.tagName'],text=True).strip()
  else:
-  request=urllib.request.Request(f'https://api.github.com/repos/{repo}/releases/latest',headers={'User-Agent':'Pingora-installer','Accept':'application/vnd.github+json'})
+  request=urllib.request.Request(f'https://api.github.com/repos/{repo}/releases/latest',headers={'User-Agent':'Pingly-installer','Accept':'application/vnd.github+json'})
   with urllib.request.urlopen(request,timeout=30) as response:
    release=response.read(262145)
   if len(release)>262144:raise SystemExit('Oversized release response')
@@ -29,7 +29,7 @@ with tempfile.TemporaryDirectory(prefix='pingora-install-') as temp:
    subprocess.run(args,check=True,stdout=subprocess.DEVNULL)
   else:
    base=f'https://github.com/{repo}/releases/' + (f'download/{a.tag}/' if a.tag else 'latest/download/')
-   request=urllib.request.Request(base+urllib.parse.quote(name,safe=''),headers={'User-Agent':'Pingora-installer'})
+   request=urllib.request.Request(base+urllib.parse.quote(name,safe=''),headers={'User-Agent':'Pingly-installer'})
    limit=65536 if name.endswith('.json') else 256 if name.endswith('.sig') else 536870912
    with urllib.request.urlopen(request,timeout=60) as response,(work/name).open('wb') as output:
     if urllib.parse.urlparse(response.url).scheme!='https':raise SystemExit('Refusing an insecure download redirect')
@@ -86,16 +86,21 @@ with tempfile.TemporaryDirectory(prefix='pingora-install-') as temp:
  if temporary.exists() or temporary.is_symlink():raise SystemExit('An installation is already pending; existing launcher retained')
  try:temporary.symlink_to(destination/'Pingora/pingora-desktop');os.replace(temporary,launcher)
  finally:temporary.unlink(missing_ok=True)
- print(f'Installed verified Pingora {version} at {destination}. Launch with {launcher}. Previous versions retained.')
+ # Keep the existing launcher as the update target for earlier installations.
+ alias=launcher.with_name('pingly')
+ try:alias.symlink_to(launcher.name)
+ except FileExistsError:pass
+ launch_command=alias if alias.is_symlink() and alias.readlink()==Path(launcher.name) else launcher
+ print(f'Installed verified Pingly {version} at {destination}. Launch with {launch_command}. Previous versions retained.')
 
 applications=home/'.local/share/applications';applications.mkdir(parents=True,exist_ok=True)
 entry=applications/'io.github.wrestle-r.pingora.desktop'
 if entry.exists() and 'X-Pingora-Installer=true' not in entry.read_text():raise SystemExit('Installed app, but preserved an existing unrelated desktop entry')
-quoted=str(launcher).replace('\\','\\\\').replace('"','\\"').replace('$','\\$').replace('`','\\`')
+quoted=str(launch_command).replace('\\','\\\\').replace('"','\\"').replace('$','\\$').replace('`','\\`')
 icon=destination/'Pingora/brand/pingora.svg'
 icon_name=str(icon) if icon.is_file() else 'network-wireless'
-entry.write_text('[Desktop Entry]\nType=Application\nName=Pingora\nComment=Connect your Android phone and Linux laptop\nExec="'+quoted+'"\nIcon='+icon_name+'\nTerminal=false\nCategories=Network;Utility;\nX-Pingora-Installer=true\n')
-print('Desktop menu entry installed. Open Pingora from your application menu.')
+entry.write_text('[Desktop Entry]\nType=Application\nName=Pingly\nComment=Connect your Android phone and Linux laptop\nExec="'+quoted+'"\nIcon='+icon_name+'\nTerminal=false\nCategories=Network;Utility;\nX-Pingora-Installer=true\n')
+print('Desktop menu entry installed. Open Pingly from your application menu.')
 
 # Keep connectivity independent of the installer terminal and the visible window.
 # Isolated --home checks write configuration but never touch the owner's service manager.
@@ -103,7 +108,7 @@ unit_dir=home/'.config/systemd/user';unit_dir.mkdir(parents=True,exist_ok=True)
 unit=unit_dir/'pingora.service'
 unit_text='''# Pingora managed background service
 [Unit]
-Description=Pingora phone connection
+Description=Pingly phone connection
 After=graphical-session.target
 PartOf=graphical-session.target
 
@@ -124,4 +129,4 @@ else:
   result=subprocess.run(['systemctl','--user','daemon-reload'],capture_output=True)
   if result.returncode==0:
    result=subprocess.run(['systemctl','--user','enable','--now','pingora.service'],capture_output=True)
-  print('Background service enabled.' if result.returncode==0 else 'Background service could not start; open Pingora after logging into your desktop.')
+  print('Background service enabled.' if result.returncode==0 else 'Background service could not start; open Pingly after logging into your desktop.')

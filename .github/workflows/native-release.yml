@@ -51,10 +51,10 @@ jobs:
       - name: Verify installer boundary without release credentials
         run: |
           python3 docs/releases/tools/test-installer.py
-          pingora_bootstrap=$(mktemp)
-          trap 'rm -f "$pingora_bootstrap"' EXIT
-          python3 docs/releases/tools/build-installer.py --output "$pingora_bootstrap"
-          bash -n "$pingora_bootstrap"
+          pingly_bootstrap=$(mktemp)
+          trap 'rm -f "$pingly_bootstrap"' EXIT
+          python3 docs/releases/tools/build-installer.py --output "$pingly_bootstrap"
+          bash -n "$pingly_bootstrap"
       - name: Install pinned Android SDK
         run: python3 docs/releases/tools/setup-sdk.py
       - name: Verify checkout ownership
@@ -78,7 +78,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
   sign:
-    if: startsWith(github.ref, 'refs/tags/v') && github.repository == 'wrestle-R/Pingora'
+    if: startsWith(github.ref, 'refs/tags/v') && github.repository == 'wrestle-R/Pingly'
     needs: build
     runs-on: ubuntu-24.04
     timeout-minutes: 15

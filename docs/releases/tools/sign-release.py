@@ -13,10 +13,10 @@ if info['commit']!=head or tag!='v'+info['version']:raise SystemExit('Artifact c
 version=info['version'];out=root/'release-private/signed';out.mkdir(parents=True,exist_ok=False);keys=root/'release-private/keys';tools=Path(os.environ['ANDROID_HOME'])/'build-tools/36.0.0'
 for path in keys.iterdir():
  if path.stat().st_mode&0o077:raise SystemExit('Signing material permissions must be private')
-for name in [f'pingora-{version}-linux-x86_64.tar.gz',f'pingora-{version}-source.tar.gz','native-upstream.tar.gz','build-info.json','build-host-packages.txt']:
+for name in [f'pingly-{version}-linux-x86_64.tar.gz',f'pingly-{version}-source.tar.gz','native-upstream.tar.gz','build-info.json','build-host-packages.txt']:
  shutil.copy2(source/name,out/name)
-run([str(tools/'apksigner'),'sign','--ks',str(keys/'android-release.p12'),'--ks-pass','file:'+str(keys/'android-store-password'),'--ks-key-alias','pingora','--out',str(out/f'pingora-{version}.apk'),str(source/f'pingora-{version}-unsigned.apk')])
-run(['python3','docs/releases/tools/verify-android.py',str(out/f'pingora-{version}.apk'),'--version',version,'--version-code',str(info['version_code'])])
+run([str(tools/'apksigner'),'sign','--ks',str(keys/'android-release.p12'),'--ks-pass','file:'+str(keys/'android-store-password'),'--ks-key-alias','pingora','--out',str(out/f'pingly-{version}.apk'),str(source/f'pingly-{version}-unsigned.apk')])
+run(['python3','docs/releases/tools/verify-android.py',str(out/f'pingly-{version}.apk'),'--version',version,'--version-code',str(info['version_code'])])
 cert=subprocess.check_output(['keytool','-exportcert','-keystore',str(keys/'android-release.p12'),'-alias','pingora','-storepass:file',str(keys/'android-store-password')],stderr=subprocess.DEVNULL)
 run(['python3','docs/releases/tools/manifest.py','--version',version,'--version-code',str(info['version_code']),'--directory',str(out),'--signing-key',str(keys/'update-ed25519.pem'),'--android-cert',hashlib.sha256(cert).hexdigest()])
 run(['python3','docs/releases/tools/build-installer.py','--output',str(out/'install-app.sh')])
@@ -34,5 +34,5 @@ for artifact in sorted(out.iterdir()):
   checksums.append(digest+'  '+artifact.name)
 (out/'SHA256SUMS').write_text('\n'.join(checksums)+'\n')
 run(['python3','docs/releases/tools/verify-release.py','--directory',str(out),'--version',version,'--version-code',str(info['version_code'])])
-run(['gh','release','create',tag,'--repo','wrestle-R/Pingora','--verify-tag','--draft','--title','Pingora '+version,'--notes','Signed development artifacts. Read the qualification limits before installing; publication follows acceptance review.',*[str(p) for p in out.iterdir() if p.is_file()]])
+run(['gh','release','create',tag,'--repo','wrestle-R/Pingly','--verify-tag','--draft','--title','Pingly '+version,'--notes','Signed development artifacts. Read the qualification limits before installing; publication follows acceptance review.',*[str(p) for p in out.iterdir() if p.is_file()]])
 print('Complete signed draft created. No public release or compatibility qualification implied.')

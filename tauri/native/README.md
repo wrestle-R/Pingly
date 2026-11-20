@@ -20,7 +20,7 @@ cmake --build tauri/target/native/build --target kdeconnectd --parallel 4
 - Own config directory: `$XDG_CONFIG_HOME/pingora` (normally `~/.config/pingora`). Do not print or upload its pairing keys/certificates.
 - Only LAN backend enabled. Bluetooth transport is compiled out.
 - Plugin registry is empty, with no scan of installed KDE Connect plugins. Only core/D-Bus-interface/daemon build subdirectories are configured. No forbidden upstream feature is loaded from the user’s system.
-- A Pingora application/display identity, with upstream author/license notices retained.
+- A Pingly application/display identity, with upstream author/license notices retained.
 
 No TLS/pairing cryptography was rewritten. The isolated build still uses upstream network packet names for interoperability. Exposing a daemon on D-Bus and reading it from Rust does not prove phone pairing, trusted-session rejection/revocation, notification mirroring or multi-desktop support.
 

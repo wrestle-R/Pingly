@@ -11,7 +11,7 @@ export default function NotFound() {
       </h1>
       <p>There’s no page at this address.</p>
       <Button asChild variant="default" size="lg"><Link href="/">
-        Back to Pingora ↗
+        Back to Pingly ↗
       </Link></Button>
     </section>
   );

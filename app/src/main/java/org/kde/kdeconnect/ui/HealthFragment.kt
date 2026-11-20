@@ -95,7 +95,7 @@ class HealthFragment : Fragment() {
                 intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
             }
             try { startActivity(intent) } catch (_: android.content.ActivityNotFoundException) {
-                text("This settings screen is unavailable. Open Android Settings, then Apps, then Pingora.")
+                text("This settings screen is unavailable. Open Android Settings, then Apps, then Pingly.")
             }
         }
         text("Connection health")
@@ -114,7 +114,7 @@ class HealthFragment : Fragment() {
             text("Reconnecting notification listener. Refresh connection to check status.")
         }
         action("Copy harmless clipboard test") {
-            context.getSystemService(android.content.ClipboardManager::class.java).setPrimaryClip(android.content.ClipData.newPlainText("Pingora test","Pingora clipboard delivery check"))
+            context.getSystemService(android.content.ClipboardManager::class.java).setPrimaryClip(android.content.ClipData.newPlainText("Pingly test","Pingly clipboard delivery check"))
             android.widget.Toast.makeText(context,"Test text copied. Tap the clipboard widget to send it.",android.widget.Toast.LENGTH_LONG).show()
         }
         action("Notification settings") { settings(Settings.ACTION_APP_NOTIFICATION_SETTINGS) }
@@ -126,13 +126,13 @@ class HealthFragment : Fragment() {
         val power = context.getSystemService(PowerManager::class.java)
         text(if (power.isIgnoringBatteryOptimizations(context.packageName)) "Battery optimization: unrestricted." else "Battery optimization: active. Android may interrupt background connections. Review battery settings if disconnects occur.")
         action("Battery optimization settings") { settings(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS) }
-        text("Discovery: keep both devices on the same trusted local network. Review Trusted networks in Pingora settings if discovery is restricted.")
+        text("Discovery: keep both devices on the same trusted local network. Review Trusted networks in Pingly settings if discovery is restricted.")
         text("Notification sharing needs separate notification access and selected phone apps in Sharing controls. Clipboard uses an explicit foreground send. Enable files and read-only folders per device in Sharing controls. Slumber requires the matching laptop integration. Optional calls are not part of this testing pass. App notification permission does not grant access to other apps’ notifications.")
         action("Preview sanitized diagnostics") {text(org.kde.kdeconnect.pingora.DiagnosticReport.create(context))}
-        action("Export sanitized diagnostics") {exportReport.launch("pingora-diagnostics.json")}
+        action("Export sanitized diagnostics") {exportReport.launch("pingly-diagnostics.json")}
         text("Signed updates")
-        text("Download the signed update bundle from Pingora’s GitHub account for private releases. Download the Android update ZIP, then import it here. The signature, APK hash, package, signer and version are checked before the system installer opens.")
-        action("Open GitHub releases") {startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/wrestle-R/Pingora/releases")))}
+        text("Download the signed update bundle from Pingly’s GitHub account for private releases. Download the Android update ZIP, then import it here. The signature, APK hash, package, signer and version are checked before the system installer opens.")
+        action("Open GitHub releases") {startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://github.com/wrestle-R/Pingly/releases")))}
         action("Import signed Android update", !updateImport.isVerifying) {importUpdate.launch(arrayOf("application/zip","application/octet-stream"))}
         text(updateMessage)
         val approval=android.widget.CheckBox(context).apply{text="I approve installing this verified update"};layout.addView(approval)
@@ -145,7 +145,7 @@ class HealthFragment : Fragment() {
                 val busy=inCall || KdeConnect.getInstance().devices.values.any{it.getPlugin<org.kde.kdeconnect.pingora.BridgePlugin>()?.files?.busy()==true}
                 val opened=org.kde.kdeconnect.pingora.SignedUpdate.install(context,candidate,true,busy)
                 if (opened) updateImport.handedToInstaller()
-                updateMessage=if(opened)"Android installer opened. Confirm there to finish." else "Allow Pingora to request installations, then return and retry."
+                updateMessage=if(opened)"Android installer opened. Confirm there to finish." else "Allow Pingly to request installations, then return and retry."
             }catch(e:Exception){updateMessage=e.message ?: "Update could not be installed"}
             render()
         }

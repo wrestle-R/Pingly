@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply the Pingora paired envelope adapter to the pinned private build tree."""
+"""Apply the Pingly paired envelope adapter to the pinned private build tree."""
 from pathlib import Path
 import sys
 

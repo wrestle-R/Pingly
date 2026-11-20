@@ -14,7 +14,7 @@ serial=os.environ.get('ANDROID_SERIAL','emulator-5554')
 if not serial.startswith('emulator-'):raise SystemExit('This destructive test is restricted to a disposable emulator')
 adb=['adb','-s',serial]
 if subprocess.check_output(adb+['shell','getprop','ro.kernel.qemu'],text=True).strip()!='1':raise SystemExit('Refusing a non-emulator device')
-apks=list(a.directory.glob('pingora-*.apk'))
+apks=list(a.directory.glob('pingly-*.apk'))
 if len(apks)!=1:raise SystemExit('Expected exactly one signed release APK')
 apk=apks[0]
 tools=Path(os.environ['ANDROID_HOME'])/'build-tools/36.0.0'
@@ -33,7 +33,7 @@ try:
  subprocess.run(adb+['uninstall','io.github.wrestle_r.pingora'],check=True,capture_output=True)
  with tempfile.TemporaryDirectory(prefix='pingora-apk-upgrade-') as temp:
   baseline=Path(temp)/'baseline.apk'
-  with urllib.request.urlopen('https://github.com/wrestle-R/Pingora/releases/download/v0.1.3/pingora-0.1.3.apk',timeout=60) as response:baseline.write_bytes(response.read())
+  with urllib.request.urlopen('https://github.com/wrestle-R/Pingly/releases/download/v0.1.3/pingora-0.1.3.apk',timeout=60) as response:baseline.write_bytes(response.read())
   if hashlib.sha256(baseline.read_bytes()).hexdigest()!='6917d4f4adda293de1dcef9b4e4bfefef3e00d3fab675757f0ff8babf0da6144':raise SystemExit('Published baseline digest changed')
   install(baseline)
   install(apk)  # No uninstall and no downgrade bypass.

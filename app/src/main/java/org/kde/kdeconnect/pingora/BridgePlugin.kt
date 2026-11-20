@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @LoadablePlugin
 class BridgePlugin : Plugin() {
-    override val displayName = "Pingora connection"
+    override val displayName = "Pingly connection"
     override val description = "Authenticated feature channel. Choose each sharing feature in Sharing controls."
     override val supportedPacketTypes = arrayOf(TYPE)
     override val outgoingPacketTypes = arrayOf(TYPE)
@@ -195,7 +195,7 @@ class BridgePlugin : Plugin() {
                 val text = data.optString("text")
                 if (text.toByteArray(Charsets.UTF_8).size <= 16384) handler.post {
                     if (allows("clipboard") && unlocked()) {
-                        val copied=runCatching {context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Pingora", text))}.isSuccess
+                        val copied=runCatching {context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Pingly", text))}.isSuccess
                         ClipboardNotice.received(context,copied)
                     }
                 }

@@ -1,4 +1,4 @@
-# Pingora implementation plan
+# Pingly implementation plan
 
 Status: implementation authorized for the full Android/Linux plan; milestone commits and pushes requested. Website P18 is complete. Native work is in progress; runtime compatibility is not yet proven. Original 17-item backlog and six test boundaries approved; progress tracking uses local Markdown. Latest user correction removes all remote input. See [readiness](readiness.md) for evidence, [backlog](backlog.md) for the approved core sequence and website extension and [testing](testing.md) for approved core test boundaries and proposed website coverage.
 
@@ -40,7 +40,7 @@ User explicitly requests phone controls for the existing right-sidebar Slumber f
 
 Phone sources: WhatsApp, Instagram, Gmail and SMS. Desktop sources: explicitly selected apps. No reliance on displayed app names for identity when stable identifiers are available.
 
-Native notification centre/right sidebar is the primary surface. Pingora also has an inbox. Show one latest-message entry per conversation, approximately three preview lines with expansion where the notification service supports it. Preserve sender, group/conversation name and message as distinct fields. Parse structured messaging data before falling back to plain notification text. Never invent truncated or withheld content.
+Native notification centre/right sidebar is the primary surface. Pingly also has an inbox. Show one latest-message entry per conversation, approximately three preview lines with expansion where the notification service supports it. Preserve sender, group/conversation name and message as distinct fields. Parse structured messaging data before falling back to plain notification text. Never invent truncated or withheld content.
 
 Handle grouped summaries without duplicating their child messages. Replace entries when a conversation updates; keep different conversations separate. Unknown/ambiguous conversation identities must not collapse unrelated senders. Preserve Unicode, line breaks and readable text; do not forward raw markup as presentation.
 
@@ -58,13 +58,13 @@ Bound individual message size, in-memory queues, disk history, transfer bufferin
 
 No saved clipboard history initially. Copy actions are explicit. Never include notification text, clipboard contents, files or pairing credentials in diagnostic logs by default.
 
-Friends default to hiding messages and OTPs while locked, with explicit opt-in to show content. Owner laptop may show all content. Validate native notification-server privacy behavior; if a lock-safe native preview cannot be guaranteed, suppress it rather than claim it is hidden. Lock-screen policy also applies to the inbox and actions. System/app stores outside Pingora may retain their own copies; Pingora cannot promise to erase them.
+Friends default to hiding messages and OTPs while locked, with explicit opt-in to show content. Owner laptop may show all content. Validate native notification-server privacy behavior; if a lock-safe native preview cannot be guaranteed, suppress it rather than claim it is hidden. Lock-screen policy also applies to the inbox and actions. System/app stores outside Pingly may retain their own copies; Pingly cannot promise to erase them.
 
 ## Permissions and feature boundaries
 
 - Require explicit approved pairing, authenticated encrypted communication, and easy revoke/unpair. A shared network alone grants no access.
 - Explain Android notification access and background requirements. Offer targeted battery guidance where needed and connection-health diagnostics. Android stopping the app remains an accepted limitation.
-- Clipboard: automatic where supported; otherwise Android notification-shade Send clipboard, share action or foreground action. Widget shows status and Send clipboard; opening Pingora may be necessary.
+- Clipboard: automatic where supported; otherwise Android notification-shade Send clipboard, share action or foreground action. Widget shows status and Send clipboard; opening Pingly may be necessary.
 - Phone storage browsing: owner-selected shared folders only, read/download. No upload, rename, delete or broad-storage-access workaround. Validate access revocation and path traversal boundaries.
 - Every incoming file transfer needs approval. Save into a dedicated destination with safe filenames and collision handling. Never execute/open automatically. Storage-full, interruption, rejection and cancellation are explicit states. Approvals do not survive a changed transfer identity.
 - Received URLs require an explicit Open link action; validate schemes before handing them to another app.

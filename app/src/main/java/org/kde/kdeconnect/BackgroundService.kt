@@ -69,7 +69,7 @@ class BackgroundService : Service() {
     private fun registerLinkProviders() {
         linkProviders.add(LanLinkProvider(this))
         //linkProviders.add(org.kde.kdeconnect.backends.loopback.LoopbackLinkProvider(this))
-        // Pingora reserves Bluetooth for optional calls, never LAN feature transport.
+        // Pingly reserves Bluetooth for optional calls, never LAN feature transport.
     }
 
     private fun onNetworkChange(network: Network?) {

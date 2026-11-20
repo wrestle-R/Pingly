@@ -1,7 +1,7 @@
-# Pingora glossary
+# Pingly glossary
 
 - **Source notification**: notification emitted by the original app on its own device.
-- **Mirror**: Pingora presentation of a source notification on the paired device. Never a new source to forward back.
+- **Mirror**: Pingly presentation of a source notification on the paired device. Never a new source to forward back.
 - **Conversation**: stable source-provided thread/group identity where available; not merely the sender display name.
 - **Version**: identity of the current source update used to reject stale actions.
 - **Dismiss**: explicitly clear an active notification, separate from marking a conversation read.

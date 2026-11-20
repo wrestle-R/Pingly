@@ -7,7 +7,7 @@ root=Path(__file__).resolve().parents[3]
 bootstrap='''#!/usr/bin/env bash
 set -euo pipefail
 if [[ $(uname -s) != Linux || $(uname -m) != x86_64 ]]; then
-  echo 'Pingora currently supports Linux x86_64.' >&2; exit 1
+  echo 'Pingly currently supports Linux x86_64.' >&2; exit 1
 fi
 if [[ $EUID == 0 ]]; then
   echo 'Run this installer as your normal desktop user, not with sudo.' >&2; exit 1

@@ -1,4 +1,4 @@
-# Pingora Android
+# Pingly Android
 
 Native Android build-path probe based on pinned KDE Connect source. Provenance and modifications are in `UPSTREAM.json`; original project notes are preserved in `UPSTREAM.md`, with original source headers, COPYING and LICENSES. Internal source namespaces remain upstream names for traceability; the APK application ID is `io.github.wrestle_r.pingora.debug`, distinct from KDE Connect. Release identity is not yet finalized for signed beta.
 
@@ -16,6 +16,6 @@ No `.env` or `local.properties` is needed. Debug signing uses Android’s ordina
 
 The APK intentionally advertises **no loadable device plugins**. The plugin registry filters out all candidate classes before instantiating them. Unsupported plugin components (keyboard, media, remote commands, SMS and other plugin entrypoints) and broad permissions are absent from the manifest. Bluetooth transport is disabled. Only the upstream LAN pairing/build infrastructure is being evaluated; Android/Linux approved pairing, rejection/revocation and feature behaviour are not accepted merely because the APK builds.
 
-This is not a finished phone companion, and it must not be presented as a release. Plugin source retained for provenance is not permission to enable removed features. Add approved capabilities only with their corresponding ticket and endpoint checks; the original KDE clipboard/transfer/notification defaults do not automatically satisfy Pingora’s stricter contract.
+This is not a finished phone companion, and it must not be presented as a release. Plugin source retained for provenance is not permission to enable removed features. Add approved capabilities only with their corresponding ticket and endpoint checks; the original KDE clipboard/transfer/notification defaults do not automatically satisfy Pingly’s stricter contract.
 
 See [native evidence](../docs/progress/native-build-verification.md), [architecture](../docs/architecture.md), [approved boundaries](../docs/testing.md) and [progress](../docs/progress/README.md).

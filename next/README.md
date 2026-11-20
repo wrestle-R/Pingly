@@ -1,4 +1,4 @@
-# Pingora website
+# Pingly website
 
 Paper Airwave, implemented with the Next.js App Router, TypeScript and local DM Sans / Manrope fonts. Home, docs, downloads, support, changelog and a custom 404 live in `src/app/`. The theme switch is the only browser-side application component.
 
@@ -32,6 +32,6 @@ Actual release signing/asset validation remains P15/P19. The site does not call 
 
 ## Hosting
 
-Vercel project `pingora` is connected to `wrestle-R/Pingora`, production branch `main`, Root Directory `next/`, framework Next.js, Node 24 and install command `npm ci`. Source deployment must come from GitHub pushes; do not use a CLI source upload or prebuilt deployment. No `.env` is required for the current site/backend, and no new secret has been provisioned. Use the owner’s Varte workflow for any future real environment files.
+Vercel project `pingly` is connected to `wrestle-R/Pingly`, production branch `main`, Root Directory `next/`, framework Next.js, Node 24 and install command `npm ci`. Source deployment must come from GitHub pushes; do not use a CLI source upload or prebuilt deployment. No `.env` is required for the current site/backend, and no new secret has been provisioned. Use the owner’s Varte workflow for any future real environment files.
 
 See [deployment record](../docs/progress/website-deployment.md) for verified deployment state and [original UI verification](../docs/progress/website-verification.md). The hero exploration in `design-exploration/` is not a route or public asset directory. Font licenses are beside their files. Phone control for native Slumber is separately tracked and not shipped by the website.

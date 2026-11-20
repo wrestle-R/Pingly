@@ -395,11 +395,11 @@ class MainActivity : AppCompatActivity(), OnSharedPreferenceChangeListener {
 
     private fun setContentFragment(fragment: Fragment) {
         supportActionBar?.title = when(fragment) {
-            is WorkspaceFragment -> "Pingora"
+            is WorkspaceFragment -> "Pingly"
             is InboxFragment -> "Inbox"
             is HealthFragment -> "Connection"
             is PairingFragment -> "Devices"
-            else -> "Pingora"
+            else -> "Pingly"
         }
         supportFragmentManager
             .beginTransaction()

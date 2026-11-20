@@ -1,7 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 
-const repository = "wrestle-R/Pingora";
+const repository = "wrestle-R/Pingly";
 const github = `https://github.com/${repository}`;
 const api = `https://api.github.com/repos/${repository}`;
 type State =
@@ -187,7 +187,7 @@ async function load(): Promise<GithubStatus> {
 // No credentials or user-specific responses are captured. Freshness target: five minutes.
 export const getPublicGithub = unstable_cache(
   load,
-  ["pingora-anonymous-github-v2"],
+  ["pingly-anonymous-github-v1"],
   { revalidate: 300 },
 );
 export function statusMessage(state: State): string {

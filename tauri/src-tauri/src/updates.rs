@@ -10,7 +10,7 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-const REPOSITORY: &str = "https://api.github.com/repos/wrestle-R/Pingora";
+const REPOSITORY: &str = "https://api.github.com/repos/wrestle-R/Pingly";
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Target {
     pub name: String,
@@ -108,7 +108,7 @@ fn trust() -> Result<[u8; 32], String> {
 }
 fn client() -> Result<reqwest::blocking::Client, String> {
     reqwest::blocking::Client::builder()
-        .user_agent("Pingora updater")
+        .user_agent("Pingly updater")
         .https_only(true)
         .timeout(Duration::from_secs(120))
         .connect_timeout(Duration::from_secs(10))
@@ -513,12 +513,12 @@ mod tests {
             crate::runtime::now()
         ));
         fs::create_dir_all(&directory).unwrap();
-        let installed = directory.join("Pingora.AppImage");
+        let installed = directory.join("Pingly.AppImage");
         let staged = directory.join("download");
         fs::write(&installed, b"old").unwrap();
         fs::write(&staged, b"bad").unwrap();
         let target = Target {
-            name: "Pingora.AppImage".into(),
+            name: "Pingly.AppImage".into(),
             size: 3,
             sha256: format!("{:x}", Sha256::digest(b"new")),
             package_name: String::new(),
