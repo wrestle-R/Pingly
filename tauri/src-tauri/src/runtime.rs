@@ -1,5 +1,5 @@
 use crate::{
-    clipboard_image::{receipt, ClipboardImage},
+    clipboard_image::{receipt, ClipboardImage, MAX_IMAGE},
     model::{Envelope, Feature, Notice, Policy, Session, Store},
     service,
 };
@@ -398,6 +398,7 @@ impl Runtime {
                 "enabled": policy.enabled,
                 "paused": policy.paused,
                 "clipboard_receipts": true,
+                "clipboard_image_limit": MAX_IMAGE,
                 "instabox_resume": resume,
                 "instabox_status": resume && self.resume_relay.as_ref().is_some_and(|relay| relay.status_available()),
             }),
@@ -651,9 +652,14 @@ impl Runtime {
         }
         let mut live = self.live.lock().ok()?;
         if kind == "clipboard_image" {
-            if live.clipboard_images.len() >= 4
-                || live.clipboard_images.contains_key(id)
-                || !unlocked()
+            if !unlocked() {
+                return Some(json!({"receipt":receipt,"result":"failed","reason":"locked"}));
+            }
+            if (live.clipboard_images.len() >= 4 && !live.clipboard_images.contains_key(id))
+                || live
+                    .clipboard_images
+                    .get(id)
+                    .is_some_and(|image| image.receipt == receipt)
             {
                 return fail();
             }
@@ -675,16 +681,22 @@ impl Runtime {
             Ok(true) => {
                 let image = live.clipboard_images.remove(id)?;
                 drop(live);
-                let copied = unlocked()
-                    && image.valid_header()
-                    && crate::system::clipboard_write_bytes(&image.bytes, Some(image.mime)).is_ok();
-                if copied {
-                    if let Ok(mut live) = self.live.lock() {
-                        live.clipboard = None;
-                    }
+                if !image.valid_header() {
+                    return fail();
                 }
-                self.native(crate::native::Command::Clipboard(copied));
-                Some(json!({"receipt":receipt,"result":if copied {"copied"} else {"failed"}}))
+                if !unlocked() {
+                    return Some(json!({"receipt":receipt,"result":"failed","reason":"locked"}));
+                }
+                if crate::system::clipboard_write_bytes(&image.bytes, Some(image.mime)).is_err() {
+                    return Some(
+                        json!({"receipt":receipt,"result":"failed","reason":"clipboard_unavailable"}),
+                    );
+                }
+                if let Ok(mut live) = self.live.lock() {
+                    live.clipboard = None;
+                }
+                self.native(crate::native::Command::Clipboard(true));
+                Some(json!({"receipt":receipt,"result":"copied"}))
             }
             Err(()) => {
                 live.clipboard_images.remove(id);

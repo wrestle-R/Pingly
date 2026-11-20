@@ -3,7 +3,7 @@ use serde_json::Value;
 use std::time::{Duration, Instant};
 
 const CHUNK: usize = 12 * 1024;
-const MAX_IMAGE: usize = 4 * 1024 * 1024;
+pub const MAX_IMAGE: usize = 16 * 1024 * 1024;
 
 pub struct ClipboardImage {
     pub receipt: String,

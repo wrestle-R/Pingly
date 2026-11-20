@@ -44,6 +44,8 @@ class BridgePlugin : Plugin() {
             && !SharingPolicy.preferences(context).getBoolean("${device.deviceId}.paused", false)
     internal val canCheckInstabox get() = canResumeInstabox && remotePolicy.optBoolean("instabox_status")
     val supportsClipboardReceipts get() = remotePolicy.optBoolean("clipboard_receipts")
+    val clipboardImageLimit get() = remotePolicy.optInt("clipboard_image_limit", ClipboardTransfer.LEGACY_IMAGE_LIMIT)
+        .coerceIn(ClipboardTransfer.LEGACY_IMAGE_LIMIT, ClipboardTransfer.MAX_IMAGE)
     val files by lazy { FileTransfers(context,this) }
     @Volatile var laptopStatus: JSONObject = JSONObject(); private set
     @Volatile var laptopStatusAt: Long = 0; private set
@@ -95,7 +97,8 @@ class BridgePlugin : Plugin() {
 
     private fun enqueue(kind: String, data: JSONObject, session: String): Boolean {
         if (!device.isPaired || !running.get()) return false
-        val json = JSONObject().put("seq",outboundSequence.getAndIncrement()).put("id", UUID.randomUUID().toString()).put("kind", kind).put("session", session).put("data", data).toString()
+        // Android escapes slashes in JSON strings. JPEG chunks can otherwise exceed the envelope limit.
+        val json = JSONObject().put("seq",outboundSequence.getAndIncrement()).put("id", UUID.randomUUID().toString()).put("kind", kind).put("session", session).put("data", data).toString().replace("\\/", "/")
         if (json.toByteArray(Charsets.UTF_8).size > 32768) return false
         return queue.offer(NetworkPacket(TYPE).apply { set("json", json) })
     }
