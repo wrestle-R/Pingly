@@ -1,6 +1,6 @@
 # Pingly
 
-An Android companion for your Linux laptop. Mirror notifications, send clipboard text and files, and check laptop status from your phone’s home screen.
+An Android companion for your Linux laptop. Mirror notifications, send clipboard text, images, and files, and check laptop status from your phone’s home screen.
 
 [Download for Android and Linux](https://github.com/wrestle-R/Pingly/releases/latest) · [Website](https://pingly-seven.vercel.app) · [Report an issue](https://github.com/wrestle-R/Pingly/issues)
 

@@ -12,7 +12,7 @@ Choose your laptop under **Pingly → Settings → Clipboard laptop**. The widge
 
 Unlock the phone and tap **Send clipboard**. The button shows **Sending…** and changes to **Sent clipboard** once the laptop writes the clipboard. Older desktop builds can queue text without a delivery receipt. Android requires a momentarily focused surface to read the clipboard, so the widget uses a transparent activity and returns to the launcher after reading.
 
-The Android sender accepts text up to 16 KiB, or PNG, JPEG, WebP, and GIF up to 4 MiB when the copying app exposes the image through Android's clipboard. Use matching Android and desktop builds for images. The image is transferred in memory through the paired connection. Paste it into a desktop app that accepts its format. Pingly keeps no clipboard history.
+The Android sender accepts text up to 16 KiB, or PNG, JPEG, WebP, and GIF up to 16 MiB when both devices run Pingly 0.1.13 or later and the copying app exposes the image through Android's clipboard. Earlier desktop builds that support images accept up to 4 MiB. The image is transferred in memory through the paired connection. Paste it into a desktop app that accepts its format. Pingly keeps no clipboard history.
 
 ## Devices and laptop status
 
