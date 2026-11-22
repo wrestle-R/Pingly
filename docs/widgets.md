@@ -12,7 +12,9 @@ Choose your laptop under **Pingly → Settings → Clipboard laptop**. The widge
 
 Unlock the phone and tap **Send clipboard**. The button shows **Sending…** and changes to **Sent clipboard** once the laptop writes the clipboard. Older desktop builds can queue text without a delivery receipt. Android requires a momentarily focused surface to read the clipboard, so the widget uses a transparent activity and returns to the launcher after reading.
 
-For a screenshot saved by Android, choose **Share → Send with Pingly → Copy image to laptop clipboard**. This sends the selected screenshot to your saved laptop.
+Screenshot-folder support requires Android Pingly 0.1.16 or later. On phones such as Nothing OS, taking a screenshot saves an image without replacing the clipboard. In **Pingly → Settings → Choose Screenshots folder**, grant read access to your `Pictures/Screenshots` or `DCIM/Screenshots` folder once. Then take a screenshot and tap **Send clipboard** as usual. Pingly sends the newest image in that folder from the last ten minutes if it is newer than your copied item. Text or an image copied after the screenshot takes priority. The app only checks this folder when you tap Send clipboard, and sends nothing automatically. **Stop including screenshots** disables this behavior.
+
+You can also choose **Share → Send with Pingly → Copy image to laptop clipboard** to send a particular image without granting folder access.
 
 The Android sender accepts text up to 16 KiB, or PNG, JPEG, WebP, and GIF up to 16 MiB when both devices run Pingly 0.1.13 or later and the copying app exposes the image through Android's clipboard. Earlier desktop builds that support images accept up to 4 MiB. The image is transferred in memory through the paired connection. Paste it into a desktop app that accepts its format. Pingly keeps no clipboard history.
 

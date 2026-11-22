@@ -67,14 +67,10 @@ private fun sendFocusedClipboard(
         return
     }
     val clip = context.getSystemService(ClipboardManager::class.java).primaryClip
-    if (clip == null || clip.itemCount == 0) {
-        done("Clipboard empty")
-        return
-    }
     if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
         ClipboardWidget.label(app, widgetId, "Sending…")
     }
-    bridge.clipboard.send(clip, sourceRead = ::close, done = ::done)
+    bridge.clipboard.send(clip, sourceRead = ::close, includeScreenshots = true, done = ::done)
 }
 
 /** A transparent focused activity lets Android authorize the widget's clipboard read. */

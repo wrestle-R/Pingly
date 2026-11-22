@@ -24,7 +24,7 @@ internal class ClipboardTransfer(private val context: Context, private val bridg
     private val timeout = Runnable { finish("Send timed out") }
     val busy get() = completion != null
 
-    fun send(clip: ClipData, sourceRead: () -> Unit, done: (String) -> Unit) {
+    fun send(clip: ClipData?, sourceRead: () -> Unit, includeScreenshots: Boolean = false, done: (String) -> Unit) {
         if (busy) return
         completion = done
         id = UUID.randomUUID().toString()
@@ -32,7 +32,10 @@ internal class ClipboardTransfer(private val context: Context, private val bridg
         val limit = bridge.clipboardImageLimit
         awaitReceipt()
         Thread({
-            val result = runCatching { readPayload(context.contentResolver, clip, limit) }
+            val result = runCatching {
+                readPayload(context.contentResolver, clip, limit,
+                    if (includeScreenshots) ScreenshotClipboard.folder(context) else null)
+            }
             handler.post {
                 if (id != request) return@post
                 sourceRead()
@@ -45,6 +48,7 @@ internal class ClipboardTransfer(private val context: Context, private val bridg
                     finish(when (it) {
                         is ImageTooLarge -> "Image exceeds ${limit / (1024 * 1024)} MiB"
                         is UnsupportedImage -> "Image format unsupported"
+                        is ScreenshotFolderUnavailable -> "Choose Screenshots folder again in Settings"
                         else -> "Image unavailable"
                     })
                 }
@@ -134,7 +138,12 @@ internal class ClipboardTransfer(private val context: Context, private val bridg
         private val PNG_SIGNATURE = byteArrayOf(0x89.toByte(), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
         private val JPEG_SIGNATURE = byteArrayOf(0xff.toByte(), 0xd8.toByte(), 0xff.toByte())
 
-        internal fun readPayload(resolver: ContentResolver, clip: ClipData, limit: Int): ClipboardPayload {
+        internal fun readPayload(
+            resolver: ContentResolver, clipboard: ClipData?, limit: Int,
+            screenshotFolder: Uri? = null, now: Long = System.currentTimeMillis(),
+        ): ClipboardPayload {
+            val clip = screenshotFolder?.let { ScreenshotClipboard.latest(resolver, it, clipboard, now) }
+                ?: clipboard ?: return ClipboardPayload.Text("")
             val text = (0 until clip.itemCount).asSequence()
                 .mapNotNull { clip.getItemAt(it).text?.toString() }
                 .firstOrNull { it.isNotEmpty() }.orEmpty()
@@ -151,7 +160,7 @@ internal class ClipboardTransfer(private val context: Context, private val bridg
                     failure = error
                 }
             }
-            if (declaresImage || failure != null && text.isEmpty()) {
+            if (declaresImage || failure != null) {
                 throw failure ?: FileNotFoundException("Clipboard image has no content URI")
             }
             return ClipboardPayload.Text(text)

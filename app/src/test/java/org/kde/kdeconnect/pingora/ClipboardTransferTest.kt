@@ -5,6 +5,10 @@ import android.content.ClipData
 import android.content.ContentResolver
 import android.content.res.AssetFileDescriptor
 import android.net.Uri
+import android.database.MatrixCursor
+import android.provider.DocumentsContract
+import org.robolectric.util.ReflectionHelpers
+import org.robolectric.util.ReflectionHelpers.ClassParameter
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertArrayEquals
@@ -69,6 +73,69 @@ class ClipboardTransferTest {
         val (_, bytes) = ClipboardTransfer.readPayload(resolver, clip, ClipboardTransfer.MAX_IMAGE) as ClipboardPayload.Image
 
         assertArrayEquals(png, bytes)
+    }
+
+    @Test
+    @Config(sdk = [28])
+    fun `send clipboard sends an OS screenshot saved after the previous copied image`() {
+        val payload = screenshotPayload(copiedAt = 1000L, screenshotAt = 2000L)
+        assertEquals("image/png", (payload as ClipboardPayload.Image).mime)
+        assertArrayEquals(screenshotPng, payload.bytes)
+    }
+
+    @Test
+    @Config(sdk = [28])
+    fun `text copied after a screenshot wins`() {
+        assertEquals(ClipboardPayload.Text("Synthetic image preview"), screenshotPayload(copiedAt = 2500L, screenshotAt = 2000L))
+    }
+
+    @Test
+    @Config(sdk = [28])
+    fun `an expired screenshot is not sent when Android has cleared the clipboard`() {
+        assertEquals(ClipboardPayload.Text(""), screenshotPayload(copiedAt = null, screenshotAt = 2000L, now = 700000L))
+    }
+
+    @Test
+    @Config(sdk = [28])
+    fun `a new screenshot sends when Android has cleared the clipboard`() {
+        assertArrayEquals(screenshotPng, (screenshotPayload(copiedAt = null, screenshotAt = 2000L) as ClipboardPayload.Image).bytes)
+    }
+
+    @Test
+    fun `an unreadable image URI never sends its preview text as a successful clipboard`() {
+        val uri = Uri.parse("content://clipboard.provider/unavailable")
+        val resolver = mockk<ContentResolver> {
+            every { openInputStream(uri) } throws java.io.FileNotFoundException()
+            every { openTypedAssetFileDescriptor(uri, "image/*", null) } throws java.io.FileNotFoundException()
+        }
+        val clip = ClipData("Image", arrayOf("application/octet-stream"), ClipData.Item("Synthetic image preview", null, uri))
+        org.junit.Assert.assertThrows(java.io.FileNotFoundException::class.java) {
+            ClipboardTransfer.readPayload(resolver, clip, ClipboardTransfer.MAX_IMAGE)
+        }
+    }
+
+    private val screenshotPng = byteArrayOf(0x89.toByte(), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 42)
+
+    private fun screenshotPayload(copiedAt: Long?, screenshotAt: Long, now: Long = 3000L): ClipboardPayload {
+        val folder = Uri.parse("content://screenshots/tree/primary%3APictures%2FScreenshots")
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(folder, "primary:Pictures/Screenshots")
+        val image = DocumentsContract.buildDocumentUriUsingTree(folder, "primary:Pictures/Screenshots/new.png")
+        val clip = copiedAt?.let {
+            ClipData.newPlainText("Old clip", "Synthetic image preview").apply {
+                ReflectionHelpers.callInstanceMethod<Void>(description, "setTimestamp", ClassParameter.from(Long::class.javaPrimitiveType, it))
+            }
+        }
+        val resolver = mockk<ContentResolver> {
+            every { query(children, any(), any(), any(), any()) } answers {
+                MatrixCursor(arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE, DocumentsContract.Document.COLUMN_LAST_MODIFIED)).apply {
+                    addRow(arrayOf<Any>("primary:Pictures/Screenshots/new.png", "image/png", screenshotAt))
+                }
+            }
+            every { openInputStream(image) } returns ByteArrayInputStream(screenshotPng)
+        }
+
+        return ClipboardTransfer.readPayload(resolver, clip, ClipboardTransfer.MAX_IMAGE, folder, now = now)
     }
 
 }

@@ -1,3 +1,5 @@
+<img src="next/public/pingly.svg" alt="Pingly paper-plane logo" width="64" />
+
 # Pingly
 
 An Android companion for your Linux laptop. Mirror notifications, send clipboard text, images, and files, and check laptop status from your phone’s home screen.

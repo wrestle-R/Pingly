@@ -114,6 +114,24 @@ class SharingFragment : Fragment() {
             render()
         }
     }
+    private val screenshotPicker = registerForActivityResult(androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) {
+            val context = requireContext()
+            try {
+                val folder = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, uri)
+                if (folder?.name?.equals("Screenshots", ignoreCase = true) != true) {
+                    message("Choose the Screenshots folder inside Pictures or DCIM.")
+                    return@registerForActivityResult
+                }
+                context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                org.kde.kdeconnect.pingora.ScreenshotClipboard.save(context, uri)
+                render()
+                message("New screenshots are included when you tap Send clipboard.")
+            } catch (_: Exception) {
+                message("Screenshot access was not granted. Choose the folder again.")
+            }
+        }
+    }
 
     private fun Int.dp() = (this*resources.displayMetrics.density).toInt()
     private var content: LinearLayout? = null
@@ -203,6 +221,17 @@ class SharingFragment : Fragment() {
         button("Clipboard laptop") {
             startActivity(Intent(context, org.kde.kdeconnect.pingora.ClipboardSendActivity::class.java)
                 .setAction(org.kde.kdeconnect.pingora.ClipboardSendActivity.CHOOSE_LAPTOP))
+        }
+        text("Screenshots", true)
+        text("Nothing OS saves screenshots without copying them. Allow your Screenshots folder so Send clipboard includes a capture from the last 10 minutes if it is newer than your copied item. Nothing is sent automatically.")
+        button("Choose Screenshots folder") {
+            screenshotPicker.launch(android.net.Uri.parse("content://com.android.externalstorage.documents/document/primary%3APictures%2FScreenshots"))
+        }
+        if (org.kde.kdeconnect.pingora.ScreenshotClipboard.folder(context) != null) {
+            button("Stop including screenshots") {
+                org.kde.kdeconnect.pingora.ScreenshotClipboard.save(context, null)
+                render()
+            }
         }
         if(android.os.Build.VERSION.SDK_INT>=26) {
             button("Add devices widget") { org.kde.kdeconnect.pingora.WidgetPreviews.pin(context, laptop = true) }
