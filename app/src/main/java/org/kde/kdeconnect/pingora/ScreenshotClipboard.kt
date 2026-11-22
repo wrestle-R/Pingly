@@ -28,7 +28,8 @@ internal object ScreenshotClipboard {
         val after = maxOf(copiedAt, now - RECENT)
         val children = DocumentsContract.buildChildDocumentsUriUsingTree(folder, DocumentsContract.getTreeDocumentId(folder))
         val columns = arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-            DocumentsContract.Document.COLUMN_MIME_TYPE, DocumentsContract.Document.COLUMN_LAST_MODIFIED)
+            DocumentsContract.Document.COLUMN_MIME_TYPE, DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME)
         var newest = after
         var result: ClipData? = null
         try {
@@ -36,6 +37,7 @@ internal object ScreenshotClipboard {
             cursor.use {
                 while (it.moveToNext()) {
                     val modified = it.getLong(2)
+                    if (it.getString(3).orEmpty().startsWith(".")) continue
                     if (modified <= newest || modified > now + 2000 || !it.getString(1).orEmpty().startsWith("image/")) continue
                     newest = modified
                     val uri = DocumentsContract.buildDocumentUriUsingTree(folder, it.getString(0))

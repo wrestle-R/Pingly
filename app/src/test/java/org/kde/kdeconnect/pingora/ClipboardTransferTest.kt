@@ -102,6 +102,12 @@ class ClipboardTransferTest {
     }
 
     @Test
+    @Config(sdk = [28])
+    fun `a trashed screenshot never replaces the latest visible capture`() {
+        assertArrayEquals(screenshotPng, (screenshotPayload(copiedAt = 1000L, screenshotAt = 2000L, trashedAt = 2500L) as ClipboardPayload.Image).bytes)
+    }
+
+    @Test
     fun `an unreadable image URI never sends its preview text as a successful clipboard`() {
         val uri = Uri.parse("content://clipboard.provider/unavailable")
         val resolver = mockk<ContentResolver> {
@@ -116,10 +122,11 @@ class ClipboardTransferTest {
 
     private val screenshotPng = byteArrayOf(0x89.toByte(), 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 42)
 
-    private fun screenshotPayload(copiedAt: Long?, screenshotAt: Long, now: Long = 3000L): ClipboardPayload {
+    private fun screenshotPayload(copiedAt: Long?, screenshotAt: Long, now: Long = 3000L, trashedAt: Long? = null): ClipboardPayload {
         val folder = Uri.parse("content://screenshots/tree/primary%3APictures%2FScreenshots")
         val children = DocumentsContract.buildChildDocumentsUriUsingTree(folder, "primary:Pictures/Screenshots")
         val image = DocumentsContract.buildDocumentUriUsingTree(folder, "primary:Pictures/Screenshots/new.png")
+        val trash = DocumentsContract.buildDocumentUriUsingTree(folder, "primary:Pictures/Screenshots/.trashed-old.png")
         val clip = copiedAt?.let {
             ClipData.newPlainText("Old clip", "Synthetic image preview").apply {
                 ReflectionHelpers.callInstanceMethod<Void>(description, "setTimestamp", ClassParameter.from(Long::class.javaPrimitiveType, it))
@@ -128,11 +135,13 @@ class ClipboardTransferTest {
         val resolver = mockk<ContentResolver> {
             every { query(children, any(), any(), any(), any()) } answers {
                 MatrixCursor(arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                    DocumentsContract.Document.COLUMN_MIME_TYPE, DocumentsContract.Document.COLUMN_LAST_MODIFIED)).apply {
-                    addRow(arrayOf<Any>("primary:Pictures/Screenshots/new.png", "image/png", screenshotAt))
+                    DocumentsContract.Document.COLUMN_MIME_TYPE, DocumentsContract.Document.COLUMN_LAST_MODIFIED, DocumentsContract.Document.COLUMN_DISPLAY_NAME)).apply {
+                    addRow(arrayOf<Any>("primary:Pictures/Screenshots/new.png", "image/png", screenshotAt, "new.png"))
+                    if (trashedAt != null) addRow(arrayOf<Any>("primary:Pictures/Screenshots/.trashed-old.png", "image/png", trashedAt, ".trashed-old.png"))
                 }
             }
             every { openInputStream(image) } returns ByteArrayInputStream(screenshotPng)
+            every { openInputStream(trash) } returns ByteArrayInputStream(screenshotPng.copyOf().apply { this[lastIndex] = 43 })
         }
 
         return ClipboardTransfer.readPayload(resolver, clip, ClipboardTransfer.MAX_IMAGE, folder, now = now)
