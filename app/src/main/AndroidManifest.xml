@@ -69,7 +69,8 @@ Pingly modification: build-path probe with no plugin components or broad permiss
         <activity android:name="org.kde.kdeconnect.ui.CustomDevicesActivity" android:label="@string/custom_devices_settings" android:exported="false" android:parentActivityName="org.kde.kdeconnect.ui.MainActivity">
             <meta-data android:name="android.support.PARENT_ACTIVITY" android:value="org.kde.kdeconnect.ui.MainActivity" />
         </activity>
-        <receiver android:name="org.kde.kdeconnect.KdeConnectBroadcastReceiver" android:exported="true">
+        <receiver android:name="org.kde.kdeconnect.PairingActionReceiver" android:exported="false" />
+        <receiver android:name="org.kde.kdeconnect.KdeConnectBroadcastReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>

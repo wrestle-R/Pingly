@@ -24,7 +24,12 @@ class ShareActivity : AppCompatActivity() {
         if(intent.action!=Intent.ACTION_SEND){status.text="Only single-item shares are supported.";return}
         val stream = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java)
             ?: intent.clipData?.takeIf { it.itemCount == 1 }?.getItemAt(0)?.uri
-        if (stream?.scheme == "content" && intent.type?.startsWith("image/") == true) {
+        val authority = stream?.authority?.substringAfterLast('@')
+        if (stream != null && (stream.scheme != "content" || authority.isNullOrEmpty() || authority == "$packageName.fileprovider")) {
+            status.text = "Choose a file shared by another app."
+            return
+        }
+        if (stream != null && intent.type?.startsWith("image/") == true) {
             layout.addView(Button(this).apply {
                 text = "Copy image to laptop clipboard"
                 setOnClickListener { sendImageToClipboard(stream, status) }

@@ -62,4 +62,16 @@ class FileTransfersTest {
         transfers.handle("file_done",JSONObject().put("id",id));assertFalse(transfers.busy())
         assertEquals("sent",transfers.snapshot().single().state)
     }
+
+    @Test fun directSharesOnlyOpenContentUris() {
+        val transfers = transfers(byteArrayOf(1))
+        every { uri.scheme } returns "file"
+        transfers.offer(uri)
+        assertFalse(transfers.busy())
+        verify(exactly = 0) { resolver.openInputStream(any()) }
+        every { uri.scheme } returns "content"
+        transfers.offer(uri)
+        assertTrue(transfers.busy())
+        transfers.close()
+    }
 }

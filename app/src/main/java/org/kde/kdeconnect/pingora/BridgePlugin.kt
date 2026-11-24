@@ -120,7 +120,7 @@ class BridgePlugin : Plugin() {
         SharingPolicy.features.forEach { enabled.put(it, allows(it)) }
         send("policy", JSONObject().put("enabled", enabled).put("paused", SharingPolicy.preferences(context).getBoolean("${device.deviceId}.paused", false)))
         if (!allows("ring")) handler.post(stopRing)
-        if (!allows("files")) files.close()
+        if (!allows("files")) files.close() else files.prune()
         battery()
         LocalInbox.flush(context,device.deviceId,this)
         if (canSend("notifications")) PingoraNotificationListener.instance?.sync(this)
@@ -193,8 +193,9 @@ class BridgePlugin : Plugin() {
             }
             "clipboard" -> if (allows("clipboard") && unlocked()) {
                 val text = data.optString("text")
+                val session = packet.optString("session")
                 if (text.toByteArray(Charsets.UTF_8).size <= 16384) handler.post {
-                    if (allows("clipboard") && unlocked()) {
+                    if (local == session && isReady && allows("clipboard") && unlocked()) {
                         val copied=runCatching {context.getSystemService(ClipboardManager::class.java).setPrimaryClip(ClipData.newPlainText("Pingly", text))}.isSuccess
                         ClipboardNotice.received(context,copied)
                     }

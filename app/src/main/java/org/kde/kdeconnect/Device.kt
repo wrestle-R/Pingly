@@ -45,9 +45,11 @@ import org.kde.kdeconnect.ui.MainActivity
 import org.kde.kdeconnect_tp.R
 import java.io.IOException
 import java.security.cert.Certificate
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicReference
 
 class Device : PacketReceiver {
 
@@ -64,6 +66,7 @@ class Device : PacketReceiver {
      * We use the current time in milliseconds as the ID as default.
      */
     private var notificationId = 0
+    private val pairingNotificationToken = AtomicReference<String?>(null)
 
     @VisibleForTesting
     var pairingHandler: PairingHandler
@@ -263,12 +266,13 @@ class Device : PacketReceiver {
         hidePairingNotification()
 
         notificationId = SystemClock.elapsedRealtime().toInt()
+        val token = UUID.randomUUID().toString()
+        pairingNotificationToken.set(token)
 
         val intent = Intent(context, MainActivity::class.java).apply {
             // PendingIntent matching ignores extras, so scope each action to this device.
             action = "org.kde.kdeconnect.PAIRING_PENDING.$deviceId"
             putExtra(MainActivity.EXTRA_DEVICE_ID, deviceId)
-            putExtra(MainActivity.PAIR_REQUEST_STATUS, MainActivity.PAIRING_PENDING)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -278,29 +282,17 @@ class Device : PacketReceiver {
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val acceptIntent = Intent(context, MainActivity::class.java).apply {
-            action = "org.kde.kdeconnect.PAIRING_ACCEPTED.$deviceId"
-            putExtra(MainActivity.EXTRA_DEVICE_ID, deviceId)
-            putExtra(MainActivity.PAIR_REQUEST_STATUS, MainActivity.PAIRING_ACCEPTED)
+        fun pairingAction(accept: Boolean, requestCode: Int): PendingIntent {
+            val action = PairingActionReceiver.intent(context, deviceId, token, accept)
+            return PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                action,
+                PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
         }
-        val rejectIntent = Intent(context, MainActivity::class.java).apply {
-            action = "org.kde.kdeconnect.PAIRING_REJECTED.$deviceId"
-            putExtra(MainActivity.EXTRA_DEVICE_ID, deviceId)
-            putExtra(MainActivity.PAIR_REQUEST_STATUS, MainActivity.PAIRING_REJECTED)
-        }
-
-        val acceptedPendingIntent = PendingIntent.getActivity(
-            context,
-            2,
-            acceptIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val rejectedPendingIntent = PendingIntent.getActivity(
-            context,
-            4,
-            rejectIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val acceptedPendingIntent = pairingAction(accept = true, requestCode = 2)
+        val rejectedPendingIntent = pairingAction(accept = false, requestCode = 4)
 
         val res = context.resources
 
@@ -318,7 +310,16 @@ class Device : PacketReceiver {
         notificationManager.notify(notificationId, noti)
     }
 
+    internal fun respondToPairingNotification(token: String, accept: Boolean) {
+        if (!isReachable || pairStatus != PairingHandler.PairState.RequestedByPeer) return
+        // Compare value equality first. AtomicReference uses reference identity for the consume step.
+        val pending = pairingNotificationToken.get() ?: return
+        if (pending != token || !pairingNotificationToken.compareAndSet(pending, null)) return
+        if (accept) acceptPairing() else cancelPairing()
+    }
+
     fun hidePairingNotification() {
+        pairingNotificationToken.set(null)
         context.getSystemService<NotificationManager>()
             ?.cancel(notificationId)
     }
@@ -380,6 +381,7 @@ class Device : PacketReceiver {
             "removeLink: ${link.linkProvider.name} -> $name active links: ${links.size}"
         )
         if (links.isEmpty()) {
+            if (pairingNotificationToken.get() != null) hidePairingNotification()
             reloadPluginsFromSettings()
             val unsent = synchronized(sendChannel) {
                 sendCoroutine?.cancel(CancellationException("Device disconnected"))

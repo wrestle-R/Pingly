@@ -7,6 +7,7 @@ import android.content.UriPermission
 import android.database.MatrixCursor
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.*
 import org.json.JSONObject
@@ -65,5 +66,42 @@ class SharedFoldersTest {
         verify(exactly=1) {resolver.query(any<Uri>(),any(),null,null,null)}
         verify(exactly=0) {resolver.openInputStream(any())}
         transfers.close();unmockkAll()
+    }
+
+    @Test fun disablingFoldersStopsAnOfferedTransferWhileFilesStayEnabled() {
+        val context = spyk(ApplicationProvider.getApplicationContext<Application>())
+        val resolver = mockk<ContentResolver>()
+        every { context.contentResolver } returns resolver
+        val root = DocumentsContract.buildTreeDocumentUri("synthetic.documents", "root")
+        val permission = mockk<UriPermission>()
+        every { permission.uri } returns root
+        every { permission.isReadPermission } returns true
+        every { resolver.persistedUriPermissions } returns listOf(permission)
+        every { resolver.query(any<Uri>(), any(), null, null, null) } answers {
+            MatrixCursor(arrayOf(OpenableColumns.DISPLAY_NAME)).apply { addRow(arrayOf("fixture.txt")) }
+        }
+        every { resolver.openInputStream(any()) } answers { byteArrayOf(1, 2, 3).inputStream() }
+        SharingPolicy.preferences(context).edit().putString(
+            "folder_roots", JSONObject().put("chosen", root.toString()).toString()
+        ).commit()
+        val bridge = mockk<BridgePlugin>()
+        every { bridge.allows("folders") } returns true
+        every { bridge.allows("files") } returns true
+        every { bridge.canSend("files") } returns true
+        every { bridge.send(any(), any()) } returns true
+        val transfers = FileTransfers(context, bridge)
+        try {
+            transfers.offer(root, "chosen")
+            val id = transfers.snapshot().single().id
+            verify(exactly = 1) { bridge.send("file_offer", any()) }
+
+            every { bridge.allows("folders") } returns false
+            transfers.handle("file_next", JSONObject().put("id", id).put("offset", 0))
+            verify(exactly = 0) { bridge.send("file_chunk", any()) }
+            assertFalse(transfers.busy())
+        } finally {
+            transfers.close()
+            unmockkAll()
+        }
     }
 }
