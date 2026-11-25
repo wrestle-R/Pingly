@@ -33,6 +33,7 @@ class FileTransfers(private val context: Context, private val bridge: BridgePlug
     @Synchronized fun snapshot(): List<Offer> { prune(); return incoming.values.map {it.offer.copy()} + outgoing.map {(id,item)->Offer(id,item.name,item.size,item.offset,if(item.started) "sending" else "waiting_for_approval",item.created,"send")} + completed.toList() }
     private fun roots(): JSONObject = try {JSONObject(SharingPolicy.preferences(context).getString("folder_roots", "{}").orEmpty())} catch (_: Exception) {JSONObject()}
     private fun allowedRoot(id: String): Boolean {
+        if (!bridge.allows("folders")) return false
         if(id=="shared-storage") return android.os.Build.VERSION.SDK_INT>=30 && Environment.isExternalStorageManager()
         val value = roots().optString(id)
         if (value.isEmpty()) return false
@@ -45,6 +46,9 @@ class FileTransfers(private val context: Context, private val bridge: BridgePlug
     }
     @Synchronized fun close() { (incoming.keys + outgoing.keys).toList().forEach {cancel(it)}; nodes.clear() }
     @Synchronized fun prune() {
+        val roots = nodes.values.map { it.root }.toSet()
+        val revoked = roots.filterNot(::allowedRoot).toSet()
+        nodes.values.removeAll { it.root in revoked }
         val now=System.currentTimeMillis()
         incoming.values.filter {now-it.offer.created > if(it.offer.state=="approval_required") 120_000 else 600_000}.map {it.offer.id}.forEach {cancel(it)}
         outgoing.filter {(_,v)->now-v.created>600_000 || v.root?.let {!allowedRoot(it)} == true}.keys.toList().forEach {cancel(it)}
@@ -66,15 +70,18 @@ class FileTransfers(private val context: Context, private val bridge: BridgePlug
         if(!bridge.canSend("files") || outgoing.size>=4 || root?.let {!allowedRoot(it)} == true) {status="Enable files on both devices and reconnect.";return}
         var opened: InputStream? = null
         try {
-            if(root=="shared-storage" && !sharedFile(uri).isFile) throw IllegalArgumentException()
-            val name=if(uri.scheme=="file") sharedFile(uri).name else context.contentResolver.query(uri,arrayOf(OpenableColumns.DISPLAY_NAME),null,null,null)?.use {c->if(c.moveToFirst()) c.getString(0) else null} ?: "shared-file"
+            val shared = if (root == "shared-storage") sharedFile(uri) else null
+            if (shared != null) require(shared.isFile) else require(uri.scheme == "content")
+            fun open(): InputStream? =
+                if (shared != null) shared.inputStream() else context.contentResolver.openInputStream(uri)
+            val name=shared?.name ?: context.contentResolver.query(uri,arrayOf(OpenableColumns.DISPLAY_NAME),null,null,null)?.use {c->if(c.moveToFirst()) c.getString(0) else null} ?: "shared-file"
             if(!safe(name)) {status="Unsupported filename.";return}
             val digest=MessageDigest.getInstance("SHA-256");var total=0L;val buffer=ByteArray(CHUNK)
-            context.contentResolver.openInputStream(uri)?.use {stream->
+            open()?.use {stream->
                 while(true) {val n=stream.read(buffer);if(n<0) break;if(n==0)continue;total+=n;if(total>MAX)throw IllegalArgumentException();digest.update(buffer,0,n)}
             } ?: throw IllegalArgumentException()
             val hash=digest.digest().joinToString("") {"%02x".format(it)}
-            val id=UUID.randomUUID().toString();opened=context.contentResolver.openInputStream(uri) ?: throw IllegalArgumentException()
+            val id=UUID.randomUUID().toString();opened=open() ?: throw IllegalArgumentException()
             outgoing[id]=Outgoing(opened,total,name,root=root);opened=null
             if(!bridge.send("file_offer",JSONObject().put("id",id).put("name",name).put("size",total).put("sha256",hash))) {cancel(id);status="Connection unavailable."} else status="File offered. Waiting for approval on the laptop."
         } catch (_: Exception) {try {opened?.close()}catch(_:Exception){};status="Could not read selected file, or it exceeds 100 MiB."}

@@ -187,15 +187,6 @@ class MainActivity : AppCompatActivity(), OnSharedPreferenceChangeListener {
                 Log.i(TAG, "Loading selected device from parameter")
                 savedDevice = intent.getStringExtra(EXTRA_DEVICE_ID)
                 savedMenuEntry = MENU_ENTRY_DEVICE_UNKNOWN
-                // If pairStatus is not empty, then the user has accepted/reject the pairing from the notification
-                val pairStatus = intent.getStringExtra(PAIR_REQUEST_STATUS)
-                if (pairStatus != null) {
-                    Log.i(TAG, "Pair status is $pairStatus")
-                    savedDevice = onPairResultFromNotification(savedDevice, pairStatus)
-                    if (savedDevice == null) {
-                        savedMenuEntry = MENU_ENTRY_ADD_DEVICE
-                    }
-                }
             }
 
             savedInstanceState != null -> {
@@ -268,22 +259,6 @@ class MainActivity : AppCompatActivity(), OnSharedPreferenceChangeListener {
     override fun onDestroy() {
         super.onDestroy()
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this)
-    }
-
-    private fun onPairResultFromNotification(deviceId: String?, pairStatus: String): String? {
-        assert(deviceId != null)
-        if (pairStatus != PAIRING_PENDING) {
-            val device = KdeConnect.getInstance().getDevice(deviceId)
-            if (device == null) {
-                Log.w(TAG, "Reject pairing - device no longer exists: $deviceId")
-                return null
-            }
-            when (pairStatus) {
-                PAIRING_ACCEPTED -> device.acceptPairing()
-                PAIRING_REJECTED -> device.cancelPairing()
-            }
-        }
-        return if (pairStatus == PAIRING_ACCEPTED || pairStatus == PAIRING_PENDING) deviceId else null
     }
 
     private fun deviceIdToMenuEntryId(deviceId: String?): Int {
@@ -432,10 +407,6 @@ class MainActivity : AppCompatActivity(), OnSharedPreferenceChangeListener {
         private const val TAG = "MainActivity"
 
         const val EXTRA_DEVICE_ID = "deviceId"
-        const val PAIR_REQUEST_STATUS = "pair_req_status"
-        const val PAIRING_ACCEPTED = "accepted"
-        const val PAIRING_REJECTED = "rejected"
-        const val PAIRING_PENDING = "pending"
         const val FLAG_FORCE_OVERVIEW = "forceOverview"
     }
 

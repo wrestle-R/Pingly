@@ -21,7 +21,11 @@ import java.security.cert.Certificate
 import java.util.Formatter
 import kotlin.time.Duration.Companion.seconds
 
-class PairingHandler(private val device: Device, private val callback: PairingCallback, var state: PairState) {
+class PairingHandler(
+    private val device: Device,
+    private val callback: PairingCallback,
+    @Volatile var state: PairState
+) {
     enum class PairState {
         NotPaired,
         Requested,
