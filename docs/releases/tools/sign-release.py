@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Sign only finished artifacts from the same checked-out tag; publish a draft."""
-import hashlib,json,os,re,shutil,subprocess
+import hashlib,json,os,re,shutil,subprocess,zipfile
 from pathlib import Path
 root=Path(__file__).resolve().parents[3];os.chdir(root)
 def run(args,**kw):return subprocess.run(args,check=True,**kw)
@@ -27,6 +27,10 @@ with tempfile.TemporaryDirectory() as temporary:
  run(['openssl','pkeyutl','-verify','-pubin','-keyform','DER','-inkey',str(d/'key'),'-rawin','-in',str(out/'pingora-update.json'),'-sigfile',str(d/'sig')],stdout=subprocess.DEVNULL)
 # Publish a deterministic checksum inventory; optional incremental-install sidecars are not downloads.
 for sidecar in out.glob('*.idsig'):sidecar.unlink()
+bundle_members=[f'pingly-{version}.apk',f'pingly-{version}-linux-x86_64.tar.gz','pingora-update.json','pingora-update.sig']
+with zipfile.ZipFile(out/f'pingly-{version}-packages.zip','w',allowZip64=True) as bundle:
+ for name in bundle_members:
+  bundle.write(out/name,name)
 checksums=[]
 for artifact in sorted(out.iterdir()):
  if artifact.is_file() and artifact.name!='SHA256SUMS':
@@ -34,5 +38,7 @@ for artifact in sorted(out.iterdir()):
   checksums.append(digest+'  '+artifact.name)
 (out/'SHA256SUMS').write_text('\n'.join(checksums)+'\n')
 run(['python3','docs/releases/tools/verify-release.py','--directory',str(out),'--version',version,'--version-code',str(info['version_code'])])
-run(['gh','release','create',tag,'--repo','wrestle-R/Pingly','--verify-tag','--draft','--title','Pingly '+version,'--notes','Signed development artifacts. Read the qualification limits before installing; publication follows acceptance review.',*[str(p) for p in out.iterdir() if p.is_file()]])
+notes=root/'docs/releases/notes'/f'{tag}.md'
+notes_args=['--notes-file',str(notes)] if notes.is_file() else ['--notes','Signed development artifacts. Read the qualification limits before installing; publication follows acceptance review.']
+run(['gh','release','create',tag,'--repo','wrestle-R/Pingly','--verify-tag','--draft','--title','Pingly '+version,*notes_args,*[str(p) for p in out.iterdir() if p.is_file()]])
 print('Complete signed draft created. No public release or compatibility qualification implied.')
