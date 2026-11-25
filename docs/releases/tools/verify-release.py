@@ -42,6 +42,14 @@ with zipfile.ZipFile(d/f'pingly-{a.version}-android-update.zip') as bundle:
   if bundle.read(name)!=(d/name).read_bytes():raise SystemExit('Android update bundle metadata mismatch')
  with bundle.open(apk) as stream:
   if hashlib.file_digest(stream,'sha256').hexdigest()!=checksums[apk]:raise SystemExit('Android update bundle APK mismatch')
+package_zip=d/f'pingly-{a.version}-packages.zip'
+if package_zip.exists():
+ with zipfile.ZipFile(package_zip) as bundle:
+  names=[f'pingly-{a.version}.apk',f'pingly-{a.version}-linux-x86_64.tar.gz','pingora-update.json','pingora-update.sig']
+  if sorted(bundle.namelist())!=sorted(names):raise SystemExit('Package ZIP inventory mismatch')
+  for name in names:
+   with bundle.open(name) as stream:
+    if hashlib.file_digest(stream,'sha256').hexdigest()!=checksums[name]:raise SystemExit('Package ZIP digest mismatch: '+name)
 with tarfile.open(d/f'pingly-{a.version}-source.tar.gz') as source:
  for item in source:
   name=item.name.lstrip('./')
